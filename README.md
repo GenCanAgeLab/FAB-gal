@@ -66,7 +66,7 @@ The results file contains the folowing columns:
 **RawIntDen**: total intensity of the positive pixels for the B-Gal threshold\
 **Total Px**: total pixels of image\
 **Area**: total area of the image\
-**Area units**: units of the "Area" column (cm, nm, ...)\
+**Area units**: units of the "Area" column (cm, µmm, nm, ...)\
 **bgMF**: mean fluorescence of the background\
 **CTF/nuclei**: corrected total fluorescence per nuceli (for culture cells), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used. Even if the app calculates it for every image we recommend to compute at your biological replicate level (e.g. for each well)\
 **CTF/area(px)**: corrected total fluorescence per pixel (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
@@ -78,22 +78,33 @@ For those users willing to apply FAB-Gal to a large number of images or for user
 
 ### 🧩 How does it work?
 
-FAB-Gal pipeline reads the TIFF images and calculates the raw integrated density, the positive pixels and the total area of the far-red channel after applying a threshold defined by the user using a negative control (unstained cells). Then, if working with culture cells, it applies a subtract background transformation to the nuclei channel (set by default but optional) and uses it as input for BiaPy, a deep learning algorithm that segmentates nuclei. Finally, these data are stored in two separate files and can be used by the user to calculate CTF per nuclei (culture cells) or CTF per area (tissue sections)
+FAB-Gal pipeline reads the TIFF images and calculates the raw integrated density, the positive pixels and the total area of the far-red channel after applying a threshold defined by the user using a negative control (unstained cells). Then, if working with culture cells, it applies a subtract background transformation to the nuclei channel (set by default but optional) and uses it as input for BiaPy, a deep learning algorithm that segmentates nuclei. Finally, these data are stored in two separate files and can be used by the user to calculate CTF per nuclei (culture cells) or CTF per area (tissue sections), you can see a quarto document example of a subsequent analyses of these data.
 
 $$
 \begin{aligned}
 \text{CTF per nuclei}
 &=
 \frac{\sum \text{RawIntDen} - \sum \text{Positive pixels} \times \text{Mean background}}
-{\sum \text{nuclei}} \\[6pt]
-\text{RawIntDen} &:\ \text{Raw integrated density, the sum of the intensity values of the positive pixels} \\
-\text{Mean background} &:\ \text{Mean intensity of an area with no cells}
+{\sum \text{nuclei}}
 \end{aligned}
 $$
 
-
 **RawIntDen** = Raw integrated density, the sum of the intensity values of the positive pixels  
-**Mean background** = Mean intensity of an area with no cells
+**Mean background** = Mean intensity of an area with no cells or debris
+
+$$
+\begin{aligned}
+\text{CTF per area}
+&=
+\frac{\sum \text{RawIntDen} - \sum \text{Positive pixels} \times \text{Mean background}}
+{\sum \text{Area}}
+\end{aligned}
+$$
+
+**Area** = the total area of the image in pixels or in physical size (e.g. µm)
+
+
+
 
 
 
@@ -105,6 +116,7 @@ $$
 ### 📝 User guide 
 Roiz
 #### Installation
+
 
 
 
