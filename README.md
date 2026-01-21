@@ -2,9 +2,11 @@
 
 🔥 **NEWS** 🔥: There are still not news
 
-FAB-Gal is a method that joins the simplicity, fast execution, low cost and versatility of the classical SA-B-Gal assay with the quantification and sensitivity of fluorescence assays. It exploits the far-red fluorescence of X-Gal product (Levitsky et al., 2013) coupled with a count of cell nuclei powered by BiaPy (https://github.com/BiaPyX/BiaPy) to quantify in a semiautomatic and unbiased manner SA-B-Gal activity. This github repository is dedicated to the image analysis part od the method. To read the full method go to **url_paper**
+FAB-Gal is a method that joins the simplicity, fast execution, low cost and versatility of the classical SA-B-Gal assay with the quantification and sensitivity of fluorescence assays. It exploits the far-red fluorescence of X-Gal product ([Levitsky et al., 2013](https://www.nature.com/articles/srep02937)) coupled with a count of cell nuclei powered by [BiaPy](https://github.com/BiaPyX/BiaPy) to quantify in a semiautomatic and unbiased manner SA-B-Gal activity. This github repository is dedicated to the image analysis part od the method. To read the full method go to **url_paper**
 
-⚠️ **GENERAL NOTE** ⚠️: in order to obtain comparable results input images of FAB-Gal must be taken with the same objective and using the same laser intensity and time exposure for the far-red channel
+⚠️ **GENERAL NOTES** ⚠️:\
+ In order to obtain comparable results input images of FAB-Gal must be taken with the same objective and using the same laser intensity and time exposure for the far-red channel\
+FAB-Gal only accepts **TIFF** images as input, if your images have a different format please convert them to TIFF using softwares such as ImageJ.
 
 ## FAB-Gal desktop application for Windows, MacOS
 
@@ -18,7 +20,7 @@ Linux app
 
 ### 🧩 How does it work ?
 
-Explanaition of the method
+Explanaition of the method Jandro
 
 ### 📝 User guide
 
@@ -29,8 +31,6 @@ First of all download the FAB-Gal desktop application (see above).
 Once you have opened the app first of all select the directory were you store the images that you want to analyze, you can filter the images you want by file name.
 
 ""Pictures of the process""
-
-⚠️ **NOTE** ⚠️: the app only accepts **TIFF** images, if your images have a different format please convert them to TIFF using softwares such as ImageJ.
 
 #### Background correction
 
@@ -68,7 +68,7 @@ The results file contains the folowing columns:
 **Area**: total area of the image\
 **Area units**: units of the "Area" column (cm, nm, ...)\
 **bgMF**: mean fluorescence of the background\
-**CTF/nuclei**: corrected total fluorescence per nuceli (for culture cells), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
+**CTF/nuclei**: corrected total fluorescence per nuceli (for culture cells), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used. Even if the app calculates it for every image we recommend to compute at your biological replicate level (e.g. for each well)\
 **CTF/area(px)**: corrected total fluorescence per pixel (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
 **CTF/area(unit)**: corrected total fluorescence per physical unit (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
 
@@ -78,7 +78,29 @@ For those users willing to apply FAB-Gal to a large number of images or for user
 
 ### 🧩 How does it work?
 
-FAB-Gal pipeline
+FAB-Gal pipeline reads the TIFF images and calculates the raw integrated density, the positive pixels and the total area of the far-red channel after applying a threshold defined by the user using a negative control (unstained cells). Then, if working with culture cells, it applies a subtract background transformation to the nuclei channel (set by default but optional) and uses it as input for BiaPy, a deep learning algorithm that segmentates nuclei. Finally, these data are stored in two separate files and can be used by the user to calculate CTF per nuclei (culture cells) or CTF per area (tissue sections)
+
+$$
+\begin{aligned}
+\text{CTF per nuclei}
+&=
+\frac{\sum \text{RawIntDen} - \sum \text{Positive pixels} \times \text{Mean background}}
+{\sum \text{nuclei}} \\[6pt]
+\text{RawIntDen} &:\ \text{Raw integrated density, the sum of the intensity values of the positive pixels} \\
+\text{Mean background} &:\ \text{Mean intensity of an area with no cells}
+\end{aligned}
+$$
+
+
+**RawIntDen** = Raw integrated density, the sum of the intensity values of the positive pixels  
+**Mean background** = Mean intensity of an area with no cells
+
+
+
+
+
+
+
 
 ### 📝 User guide 
 Roiz
