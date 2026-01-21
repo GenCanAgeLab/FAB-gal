@@ -60,17 +60,17 @@ Once you have set all the parameters, you can simply measure the images you want
 
 The results file contains the folowing columns:
 
-File: name of the image file\
-Nuclei: number of nuclei of the image\
-NpxPos: number of positive pixels for the B-Gal threshold\
-RawIntDen: total intensity of the positive pixels for the B-Gal threshold\
-Total Px: total pixels of image\
-Area: total area of the image\
-Area units: units of the "Area" column (cm, nm, ...)\
-bgMF: mean fluorescence of the background\
-CTF/nuclei: corrected total fluorescence per nuceli (for culture cells), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
-CTF/area(px): corrected total fluorescence per pixel (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
-CTF/area(unit): corrected total fluorescence per physical unit (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
+**File**: name of the image file\
+**Nuclei**: number of nuclei of the image\
+**NpxPos**: number of positive pixels for the B-Gal threshold\
+**RawIntDen**: total intensity of the positive pixels for the B-Gal threshold\
+**Total Px**: total pixels of image\
+**Area**: total area of the image\
+**Area units**: units of the "Area" column (cm, nm, ...)\
+**bgMF**: mean fluorescence of the background\
+**CTF/nuclei**: corrected total fluorescence per nuceli (for culture cells), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
+**CTF/area(px)**: corrected total fluorescence per pixel (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
+**CTF/area(unit)**: corrected total fluorescence per physical unit (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
 
 ## 🧑‍💻 FAB-Gal Jupyter notebook for high-throughput applications
 
