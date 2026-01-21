@@ -1,0 +1,70 @@
+# BiaPy version: 3.6.6
+
+SYSTEM:
+    NUM_CPUS: -1
+
+PROBLEM:
+    TYPE: INSTANCE_SEG
+    NDIM: 2D
+    INSTANCE_SEG:
+        DATA_CHANNELS: ['F', 'C']
+        WATERSHED:
+          SEED_CHANNELS: ["F", 'C']
+          SEED_CHANNELS_THRESH: ["0.7", "0.6"]
+          TOPOGRAPHIC_SURFACE_CHANNEL: "F"
+          GROWTH_MASK_CHANNELS: ["F"]
+          GROWTH_MASK_CHANNELS_THRESH: ["auto"]
+          DATA_REMOVE_BEFORE_MW: True
+          DATA_REMOVE_SMALL_OBJ_BEFORE: 10
+  
+DATA: 
+    PATCH_SIZE: (256, 256, 1)  
+    TRAIN:                                                                                                              
+        PATH: /path/to/data
+        GT_PATH: /path/to/data
+        IN_MEMORY: True
+    VAL:
+        SPLIT_TRAIN: 0.1
+    TEST:                                                                                                               
+        PATH: ./biapy_input/
+        IN_MEMORY: True
+        LOAD_GT: False
+        PADDING: (32,32)
+        # SAVE_MODEL_RAW_OUTPUT: False
+    # NORMALIZATION:
+    #     PERC_CLIP: True
+    #     PERC_LOWER: 0.0
+    #     PERC_UPPER: 0.99
+
+AUGMENTOR:
+    ENABLE: True
+    RANDOM_ROT: True
+    VFLIP: True
+    HFLIP: True
+
+MODEL:
+    LOAD_CHECKPOINT: False
+    SOURCE: 'bmz'
+    BMZ:
+        SOURCE_MODEL_ID: 'frank-boar'
+
+TRAIN:
+    ENABLE: False
+    OPTIMIZER: ADAMW
+    LR: 1.E-4
+    BATCH_SIZE: 8
+    EPOCHS: 100
+    PATIENCE: 20
+
+
+# Loss function
+LOSS:
+    CLASS_REBALANCE: True # give the same weight to all problem representation channels
+
+TEST:
+    ENABLE: True
+    AUGMENTATION: False
+    FULL_IMG: False
+    POST_PROCESSING:
+        MEASURE_PROPERTIES:
+            ENABLE: True
