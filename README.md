@@ -16,11 +16,11 @@ MacOs app
 
 Linux app
 
-### How does it work ?
+### 🧩 How does it work ?
 
 Explanaition of the method
 
-### User guide
+### 📝 User guide
 
 #### Start and file selection
 
@@ -30,7 +30,7 @@ Once you have opened the app first of all select the directory were you store th
 
 ""Pictures of the process""
 
-⚠️ **NOTE** ⚠️: the app only accepts **TIFF** imageges, if your images have a different format please convert them to TIFF using softwares such as ImageJ.
+⚠️ **NOTE** ⚠️: the app only accepts **TIFF** images, if your images have a different format please convert them to TIFF using softwares such as ImageJ.
 
 #### Background correction
 
@@ -54,15 +54,35 @@ The B-Gal threshold is used to correct cell autofluorescence, so after loading y
 
 Once you have set all the parameters, you can simply measure the images you want by clicking on "Measure" or measure all images (or the ones you filtered) by clicking on "Run all images". Once the images have been measured you can export your results to a csv file.
 
+⚠️ **NOTE** ⚠️: in case you are measuring SA-B-gal of tissues the procedure is the same but without the nuclei channel, because similar cellularity is assumed when comparing the same tissue zone.
+
 #### Interpreting the results
 
-The results file contains the folowing columns:\
-File: name of the image file
+The results file contains the folowing columns:
 
+File: name of the image file\
+Nuclei: number of nuclei of the image\
+NpxPos: number of positive pixels for the B-Gal threshold\
+RawIntDen: total intensity of the positive pixels for the B-Gal threshold\
+Total Px: total pixels of image\
+Area: total area of the image\
+Area units: units of the "Area" column (cm, nm, ...)\
+bgMF: mean fluorescence of the background\
+CTF/nuclei: corrected total fluorescence per nuceli (for culture cells), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
+CTF/area(px): corrected total fluorescence per pixel (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
+CTF/area(unit): corrected total fluorescence per physical unit (for tissues), this unit is normalized by number of cells and corrected for autofluorescence and background so it can be directly used\
 
+## 🧑‍💻 FAB-Gal Jupyter notebook for high-throughput applications
 
-## 🧑‍💻 FAB-Gal Jupyter notebook for high-throughput applications 
+For those users willing to apply FAB-Gal to a large number of images or for users that have computanional skills we provide a Jupyter notebook for a faster and more customable execution of FAB-Gal.
 
+### 🧩 How does it work?
+
+FAB-Gal pipeline
+
+### 📝 User guide 
+Roiz
+#### Installation
 
 
 
