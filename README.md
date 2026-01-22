@@ -109,9 +109,15 @@ $$
 
 ### 📝 User guide 
 
-#### Installation
+#### Download and installation
 
-Roiz complete this please
+First of all download the **Python** folder from the repository. Open the folder using VScode and create an environment using the **FABGal-env-yml** file. This will create an environment with all the necessary dependencies.
+
+```bash
+conda env create -f FABGal-env-yml
+```
+
+Once you have create the environment enter in the jupyter notebook **FABGal.ipnyb**
 
 ## Authors
 
