@@ -1,0 +1,19 @@
+name: FABGal-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - ruamel.yaml
+  - ipykernel
+  - numpy
+  - pandas
+  - scikit-image
+  - pip:
+      - biapy==3.6.8
+      - bioio==3.0.0
+      - bioio-base==3.0.0
+      - bioio-ome-tiff==1.4.0
+      - bioio-tifffile
+      - zarr==2.16.1
