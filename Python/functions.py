@@ -61,7 +61,8 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
     
     # Calculate stats
     NpxPos = np.sum(mask).item()
-    NpxTot = np.sum(imgdata).item()
+    NpxTot = imgdata.size
+
     if pixInfo is True:
         AreaPos = NpxPos * pxarea
         AreaTot = NpxTot * pxarea
@@ -69,7 +70,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
         AreaPos = None
         AreaTot = None
     
-    RawIntDen = np.sum(imgdata[mask == 1]).item()
+    RawIntDen = np.sum(imgdata[mask]).item()
     
     return [NpxPos, NpxTot, AreaPos, AreaTot, RawIntDen]
 
