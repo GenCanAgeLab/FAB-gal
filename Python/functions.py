@@ -1,7 +1,7 @@
 # Load libraries
 
 from skimage.restoration import rolling_ball
-from skimage.transform import rescale
+from skimage.transform import rescale,resize
 from skimage.util import img_as_ubyte, img_as_float
 from scipy.ndimage import uniform_filter
 import numpy as np
@@ -94,7 +94,15 @@ def subtract_background(img, radius : int, scale : int = 8) -> NDArray[np.uint8]
     """
     img = uniform_filter(img, size=3)
     img = img_as_float(img)
-    bg = rescale(img, 1/scale, order=1)
+
+    #Downscale
+    bg = rescale(img,
+                 1/scale,
+                 order=1,
+                 preserve_range=True)
     bg = rolling_ball(bg, radius=radius, nansafe=False)
-    bg = rescale(bg, scale, order=1)
+    bg = resize(bg,
+                img.shape,
+                order=1,
+                preserve_range=True)
     return img_as_ubyte(img-bg)
