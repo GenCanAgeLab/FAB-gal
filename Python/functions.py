@@ -54,10 +54,8 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
         pxarea = 1 #  If there is no info about physical pixel size, defaults to 1 to perform calculations.
     
     # Extract image data for the specific channel
-    try:
-        imgdata = img.get_image_data("YX", C=bgal_ch)
-    except IndexError as e:
-        raise IndexError(f"\nERROR: Image does not have B-Gal input channel. Please check that B-Gal channel parameters are correct.") from e
+    imgdata = img.get_image_data("YX", C=bgal_ch)
+    
     
     # Create a boolean mask for pixels within the threshold
     mask = (imgdata >= bgal_thmin) & (imgdata <= bgal_thmax)
