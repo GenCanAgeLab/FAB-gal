@@ -33,9 +33,9 @@ in the “Filter files (Regex)” field to select a subset of your files
 file from the dropdown menu.
 
 ## Image display section
-
-<img src="Help_images/clipboard-2478083132.png" align="center" />
-
+<p align="center">
+<img src="Help_images/clipboard-2478083132.png"/>
+</p>
 Once a file is selected, the individual channels will be shown on the
 “display and thresholding section”. By default, if the file has at least
 two channels, channel 1 will be considered the nuclei marker and channel
@@ -57,13 +57,14 @@ cursor, the MFI (mean fluorescence intensity of the whole image) and
 Sel_area (percentage of selected area by the threshold). The nuclei
 channel does not show any statistics until the user press the “Count and
 filter” button in the lateral panel (see below)
-
+<p align="center">
 <img src="Help_images/clipboard-3749568750.png" align="center" />
+</p>
 
 ## Side bar panel
-
+<p align="left" style="float:left;>
 <img src="Help_images/clipboard-4090961768.png" align="center" />
-
+</p>
 The first section of the sidebar panel is the channel selection. The app
 will show you dropdown menus to select the channel for the nuclei and
 SAbGal images.
@@ -96,8 +97,9 @@ If you modify the threshold or press reset, the app will display again
 the thresholded (black and white) image (just for speeding up
 interactivity). Press again “Count and filter” to see the segmentation
 previsualization.
-
+<p align="center">
 <img src="Help_images/clipboard-1235689510.png" align="center" />
+</p>
 
 Finally, the last section of the sidebar panel is dedicated for analysis
 options. In the first field, **“Pixel Area (in microns^2)”**, you can
@@ -118,8 +120,9 @@ button extract the MFI from a background image that is loaded in the
 app.
 
 ## Single image and batch analysis
-
+<p align="center">
 <img src="Help_images/clipboard-3906508211.png" align="center" />
+</p>
 
 Once you have your settings set, you can click on “**Measure**” to
 process the current image. A result table will be shown bellow the image
@@ -133,8 +136,9 @@ images**” and the app will start measuring all files with the current
 settings.
 
 ## Results section
-
+<p align="center">
 <img src="Help_images/clipboard-229873446.png" align="center" />
+</p>
 
 If you use the “Measure” or “Run for all images” buttons, a result table
 will displayed at the bottom of the app. The fields are:
