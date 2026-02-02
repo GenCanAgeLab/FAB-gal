@@ -20,7 +20,7 @@ multiple images.
 
 ## Input files section
 
-![](Help_images/clipboard-1984726604.png)
+<img src="Help_images/clipboard-1984726604.png" align="center" />
 
 To start using this tool, first use the browse button to select a local
 folder from your computer containing your image files. The app will scan
@@ -33,7 +33,7 @@ file from the dropdown menu.
 
 ## Image display section
 
-<img src="Help_images/clipboard-2478083132.png" data-fig-align="center" />
+<img src="Help_images/clipboard-2478083132.png" align="center" />
 
 Once a file is selected, the individual channels will be shown on the
 “display and thresholding section”. By default, if the file has at least
@@ -57,12 +57,11 @@ Sel_area (percentage of selected area by the threshold). The nuclei
 channel does not show any statistics until the user press the “Count and
 filter” button in the lateral panel (see below)
 
-<img src="Help_images/clipboard-3749568750.png" data-fig-align="center" />
+<img src="Help_images/clipboard-3749568750.png" align="center" />
 
 ## Side bar panel
 
-<img src="Help_images/clipboard-4090961768.png"
-style="float: left; margin-right: 10px;" />
+<img src="Help_images/clipboard-4090961768.png" align="center" />
 
 The first section of the sidebar panel is the channel selection. The app
 will show you dropdown menus to select the channel for the nuclei and
@@ -97,7 +96,7 @@ the thresholded (black and white) image (just for speeding up
 interactivity). Press again “Count and filter” to see the segmentation
 previsualization.
 
-<img src="Help_images/clipboard-1235689510.png" data-fig-align="center" />
+<img src="Help_images/clipboard-1235689510.png" align="center" />
 
 Finally, the last section of the sidebar panel is dedicated for analysis
 options. In the first field, **“Pixel Area (in microns^2)”**, you can
@@ -119,7 +118,7 @@ app.
 
 ## Single image and batch analysis
 
-<img src="Help_images/clipboard-3906508211.png" data-fig-align="center" />
+<img src="Help_images/clipboard-3906508211.png" align="center" />
 
 Once you have your settings set, you can click on “**Measure**” to
 process the current image. A result table will be shown bellow the image
@@ -134,7 +133,7 @@ settings.
 
 ## Results section
 
-![](Help_images/clipboard-229873446.png)
+<img src="Help_images/clipboard-229873446.png" align="center" />
 
 If you use the “Measure” or “Run for all images” buttons, a result table
 will displayed at the bottom of the app. The fields are:
