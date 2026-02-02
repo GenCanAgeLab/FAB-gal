@@ -1,4 +1,3 @@
-
 # Load libraries and functions ----
 library(shiny)
 library(shinyFiles)
@@ -11,40 +10,41 @@ source("Functions.R")
 ui <- fluidPage(
   ## Application title ----
   titlePanel(
-    windowTitle= "FAβGal - SA-β-Galactosidase Analysis",
+    windowTitle = "FAβGal - SA-β-Galactosidase Analysis",
     fluidRow(
-      style="text-align: center;",
+      style = "text-align: center;",
       column(
         width = 3,
         img(
-          src="https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
-          align="rigth",
-          height=100
-          )
-        ),
+          src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+          align = "rigth",
+          height = 100
+        )
+      ),
       column(
         width = 6,
         h3("FAβGal - SA-β-Galactosidase Analysis"),
         h4(
           a(
             "Genomes, Cancer and Aging (GenCanAge) Group",
-            href="https://portalinvestigacion.uniovi.es/grupos/77669/detalle?lang=en",
-            target="_blank")
+            href = "https://portalinvestigacion.uniovi.es/grupos/77669/detalle?lang=en",
+            target = "_blank"
           )
-        ),
+        )
+      ),
       column(
         width = 3,
         img(
-          src="https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
-          align="rigth",
-          height=100
-          )
+          src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+          align = "rigth",
+          height = 100
         )
       )
-    ),
+    )
+  ),
   ## SidebarPanel ----
   sidebarPanel(
-    width=3,
+    width = 3,
     style = "background: #ffffff;text-align: center;",
     ### Channel selection ----
     wellPanel(
@@ -52,78 +52,80 @@ ui <- fluidPage(
       div(strong("Channel Selection")),
       fluidRow(
         column(
-          width=6,
+          width = 6,
           align = "center",
           strong("SAbGal")
-          ),
+        ),
         column(
           width = 6,
           selectizeInput(
             "schan",
             label = NULL,
-            choices=NULL,
-            options=list(
-              allowEmptyOption=TRUE,
-              showEmptyOptionInDropdown=TRUE,
-              emptyOptionLabel="None"
-              )
+            choices = NULL,
+            options = list(
+              allowEmptyOption = TRUE,
+              showEmptyOptionInDropdown = TRUE,
+              emptyOptionLabel = "None"
             )
           )
-        ),
+        )
+      ),
       fluidRow(
         column(
           width = 6,
           strong("Nuclei")
-          ),
+        ),
         column(
           width = 6,
           selectizeInput(
             "nchan",
             label = NULL,
-            choices=NULL,
-            options=list(
-              allowEmptyOption=TRUE,
-              showEmptyOptionInDropdown=TRUE,
-              emptyOptionLabel="None"
-              )
+            choices = NULL,
+            options = list(
+              allowEmptyOption = TRUE,
+              showEmptyOptionInDropdown = TRUE,
+              emptyOptionLabel = "None"
             )
           )
         )
-      ),
+      )
+    ),
     ### Nuclei options wellpanel ----
     wellPanel(
-      style = "background: #eddcd3", align = "center",
-      div(strong("Nuclei segmentation"),style="text-align:center"),
+      style = "background: #eddcd3",
+      align = "center",
+      div(strong("Nuclei segmentation"), style = "text-align:center"),
       br(),
       sliderInput(
         "sigma",
         label = "Gaussian blur",
-        min=0,
-        max=10,
-        value=0,
-        step=0.1
-        ),
+        min = 0,
+        max = 10,
+        value = 0,
+        step = 0.1
+      ),
       checkboxInput(
         'sback',
         label = 'Substract background',
         value = FALSE
-        ),
+      ),
       sliderInput(
         "radius",
         label = "Radius",
-        min=21,
-        max=1001,
-        value=51,
-        step=1
-        )
-      ),
+        min = 21,
+        max = 1001,
+        value = 51,
+        step = 1
+      )
+    ),
     ### Nuclei segmentation wellpanel ----
     wellPanel(
-      style = "background: #eddcd3", align = "center",
-      actionButton('ApplyTh',"Count and filter",class="btn-primary"),
-      checkboxInput('rmborder',"Remove on edges",TRUE),
-      sliderInput('nsize','Area',0,10000,c(0,10000))
-      ),
+      style = "background: #eddcd3",
+      align = "center",
+      actionButton('ApplyTh', "Count and filter", class = "btn-primary"),
+      checkboxInput('rmborder', "Remove on edges", TRUE),
+      sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
+    ),
     ### Pixel size and MFI panel ----
     wellPanel(
       style = "background: #dccce6",
@@ -131,34 +133,34 @@ ui <- fluidPage(
       fluidRow(
         column(
           width = 7,
-          align='center',
-          textInput('pxarea',NULL,"",placeholder = "Ej. 0.45")
-          ),
+          align = 'center',
+          textInput('pxarea', NULL, "", placeholder = "Ej. 0.45")
+        ),
         column(
           width = 5,
-          align='center',
-          actionButton('getpxa','Get')
-          )
-        ),
+          align = 'center',
+          actionButton('getpxa', 'Get')
+        )
+      ),
       strong('Background fluorescence'),
       fluidRow(
         column(
           width = 7,
-          align='center',
-          textInput('bmfi',NULL,"0", placeholder = "Ej. 23")
-          ),
+          align = 'center',
+          textInput('bmfi', NULL, "0", placeholder = "Ej. 23")
+        ),
         column(
           width = 5,
-          align='center',
-          actionButton('getbmfi','Get')
-          )
+          align = 'center',
+          actionButton('getbmfi', 'Get')
         )
       )
+    )
   ),
   ## Main panel ----
   mainPanel(
-    width=9,
-    style="text-align: center;",
+    width = 9,
+    style = "text-align: center;",
     ### File selection section ----
     wellPanel(
       style = "background: #eddcd3;",
@@ -169,19 +171,20 @@ ui <- fluidPage(
           div(shinyDirButton(
             id = 'dir',
             label = 'Browse',
-            title = 'dire'))
-          ),
+            title = 'dire'
+          ))
+        ),
         column(
           width = 6,
           strong("Choose a file"),
           selectizeInput(
             'imgpath',
             label = NULL,
-            selected=NULL,
-            choices=NULL,
+            selected = NULL,
+            choices = NULL,
             width = "100%"
-            )
-          ),
+          )
+        ),
         column(
           width = 3,
           strong("Filter files (Regex)"),
@@ -190,112 +193,117 @@ ui <- fluidPage(
             label = NULL,
             placeholder = "e.g., .czi or .tif",
             width = "100%"
-            )
           )
-        ),
-      fluidRow(
-        actionButton('run',"Measure current", class="btn-primary"),
-        actionButton('run.all',"Run for all images", class="btn-primary"),
-        tags$a(
-          "Click Here To Learn More",
-          href="Help_page_quarto.html", target="_blank",
-          class="btn btn-info")
         )
       ),
+      fluidRow(
+        actionButton('run', "Measure current", class = "btn-primary"),
+        actionButton('run.all', "Run for all images", class = "btn-primary"),
+        actionButton("help", "Click Here To Learn More", class = "btn btn-info")
+      )
+    ),
     ### Images and sliders ----
     fluidRow(
       #### Nuclei ----
       column(
         width = 6,
-        style="padding-right: 2px",
+        style = "padding-right: 2px",
         wellPanel(
           sliderInput(
             inputId = "thres.n",
             label = "Nuclei Threshold",
             min = 0,
             max = 255,
-            value = c(0,255),
-            round=2),
-          actionButton('runotsu.n','Auto'),
-          actionButton('reset.thn','Reset'),
-          plotOutput("nplot")
+            value = c(0, 255),
+            round = 2
           ),
-        verbatimTextOutput('stats.n')
+          actionButton('runotsu.n', 'Auto'),
+          actionButton('reset.thn', 'Reset'),
+          plotOutput("nplot")
         ),
+        verbatimTextOutput('stats.n')
+      ),
       column(
         ### SABGAL ----
         width = 6,
-        style="padding-left: 2px",
+        style = "padding-left: 2px",
         wellPanel(
           sliderInput(
             inputId = "thres.s",
             label = "SA-β-Gal Threshold",
             min = 0,
             max = 255,
-            value = c(0,255),
-            round=2),
-          actionButton('runotsu.s','Auto'),
-          actionButton('reset.ths','Reset'),
+            value = c(0, 255),
+            round = 2
+          ),
+          actionButton('runotsu.s', 'Auto'),
+          actionButton('reset.ths', 'Reset'),
           plotOutput(
             outputId = "splot",
             hover = hoverOpts(
               id = "splot_hover",
               delay = 500,
-              delayType = "throttle")
+              delayType = "throttle"
             )
-          ),
+          )
+        ),
         verbatimTextOutput('stats.s')
-        )
-      ),
+      )
+    ),
     ## Results table ----
     fluidRow(
-      style="align-text:center",
+      style = "align-text:center",
       h4("Batch Analysis Results"),
       downloadButton("download_results", "Download Results CSV"),
-      actionButton('reset','Reset results')
-      ),
+      actionButton('reset', 'Reset results')
+    ),
     fluidRow(
       tableOutput("results_table"),
       br()
-      )
-    ),
+    )
+  ),
   fluidRow(
-    style="text-align: center;",
-    p("Developed by Alejandro P. Ugalde, Antonio Garcia-Bernardo Tartiere and David Roiz del Valle"),
+    style = "text-align: center;",
+    p(
+      "Developed by Alejandro P. Ugalde, Antonio Garcia-Bernardo Tartiere and David Roiz del Valle"
+    ),
     a(
       "github.com/GenCanAgeLab/SAbGal_quant",
-      href="https://github.com/GenCanAgeLab/SAbGal_quant",
-      target="_blank"
-      )
-    ),
+      href = "https://github.com/GenCanAgeLab/SAbGal_quant",
+      target = "_blank"
+    )
+  ),
   ## CSS Styling ----
   tags$head(
-    tags$style('
+    tags$style(
+      '
     .well {padding:2px; margin-bottom: 2px;}
     .form-group {margin-bottom: 2px;}
     .checkbox label {font-weight: bold;}
-    ')
+    '
+    )
   )
 )
 
 
-
 # Define Server ----
 server <- function(input, output, session) {
-
   ## Directory handling ----
-  
+
   roots <- c("Examples" = './Examples', 'Home' = fs::path_home())
   # roots <- getVolumes()()
-  
-  ## Client connection for file system 
+
+  ## Client connection for file system
   shinyDirChoose(input, 'dir', roots = roots, session = session)
 
   ## Handeling selected dir
   ## It also prevent updating if the browse dialog is cancelled
   current_mydir <- reactiveVal(NULL)
   observeEvent(input$dir, {
-    parsed <- tryCatch(parseDirPath(roots = roots, input$dir), error = function(e) character(0))
+    parsed <- tryCatch(
+      parseDirPath(roots = roots, input$dir),
+      error = function(e) character(0)
+    )
     if (is.character(parsed) && length(parsed) > 0 && nzchar(parsed)) {
       current_mydir(parsed)
     }
@@ -308,73 +316,87 @@ server <- function(input, output, session) {
   ### File handeling ----
   ## Reactive for filtered files
   filtered_files <- reactive({
-    validate(need(mydir(),"open a folder"))
-    all_files <- list.files(mydir(), pattern="\\.",full.names = FALSE)
+    validate(need(mydir(), "open a folder"))
+    all_files <- list.files(mydir(), pattern = "\\.", full.names = FALSE)
     # Apply file filter if provided
     if (!is.null(input$file_filter) && nzchar(input$file_filter)) {
-      all_files <- all_files[grepl(input$file_filter, all_files, ignore.case = TRUE)]
+      all_files <- all_files[grepl(
+        input$file_filter,
+        all_files,
+        ignore.case = TRUE
+      )]
     }
     all_files
   })
-  
+
   ## Observer to update file selectizeinput
   observe({
     updateSelectizeInput(
       session,
       'imgpath',
       choices = filtered_files(),
-      selected = ""  # Don't pre-select any file
+      selected = "" # Don't pre-select any file
     )
   })
-  
+
   ## Manage selected image
   imgpath <- reactiveVal(NULL)
-  observeEvent(input$imgpath,{
+  observeEvent(input$imgpath, {
     imgpath(input$imgpath)
   })
-  
+
   ### Reset things when changing directory ----
-  observeEvent(mydir(),{
+  observeEvent(mydir(), {
     updatechan(TRUE)
     imgpath(NULL)
-    updateSliderInput(session,'thres.n',value=c(0,255),min=0,max=255)
-    updateSliderInput(session,'thres.s',value=c(0,255),min=0,max=255)
-    updateTextInput(session,'bmfi',value="0")
-    updateTextInput(session,'pxarea',value="")
+    updateSliderInput(session, 'thres.n', value = c(0, 255), min = 0, max = 255)
+    updateSliderInput(session, 'thres.s', value = c(0, 255), min = 0, max = 255)
+    updateTextInput(session, 'bmfi', value = "0")
+    updateTextInput(session, 'pxarea', value = "")
   })
-  
-  
+
   ## Image loading ----
-  
-  ### Read image ---- 
+
+  ### Read image ----
   img <- reactive({
-    req(imgpath(),mydir())
+    req(imgpath(), mydir())
     # Read image
-    tryCatch({
-      myreadimg(file.path(mydir(),imgpath()))
-    },
-    error = function(e) {
-      showNotification(
-        paste0("Unknown file format,cannot read image file: ", imgpath()),
-        type='error')
-      return(NULL)
-    })
+    tryCatch(
+      {
+        myreadimg(file.path(mydir(), imgpath()))
+      },
+      error = function(e) {
+        showNotification(
+          paste0("Unknown file format,cannot read image file: ", imgpath()),
+          type = 'error'
+        )
+        return(NULL)
+      }
+    )
   })
-  
+
   ### Check valid image ----
   valid_img <- reactive({
     req(img())
-    if (length(dim(img())) > 3){
-      showNotification("Image with more than 3 dimesions. Only images with XYC dimensions are supported",type='error')
+    if (length(dim(img())) > 3) {
+      showNotification(
+        "Image with more than 3 dimesions. Only images with XYC dimensions are supported",
+        type = 'error'
+      )
       return(NULL)
     }
-    if (!grepl('^XYC',coreMetadata(img())$dimensionOrder)){
-      showNotification(paste0("Image dimesion order should be XYC. Your image is: coreMetadata(img)$dimensionOrder"),type='error')
+    if (!grepl('^XYC', coreMetadata(img())$dimensionOrder)) {
+      showNotification(
+        paste0(
+          "Image dimesion order should be XYC. Your image is: coreMetadata(img)$dimensionOrder"
+        ),
+        type = 'error'
+      )
       return(NULL)
     }
     img()
   })
-  
+
   ### Number of channels ----
   nc <- reactive({
     req(valid_img())
@@ -385,293 +407,323 @@ server <- function(input, output, session) {
     req(valid_img())
     get_bitdepth(valid_img())
   })
-  
+
   ### Valid image actions ----
   # Logic to update channels only when the first image is open
   updatechan <- reactiveVal(TRUE)
   observe(
     {
-    req(valid_img(), nc())
-    # Actual channel selection (it there is one)
-    maxchan <- max(as.numeric(c(input$schan,input$nchan,1)),na.rm=T)
-    if (updatechan() == TRUE | nc() < maxchan){
-      if (nc() >= 2){
-        nchan <- 1
-        schan <- 2
-      } else {
-        nchan <- NULL
-        schan <- 1
+      req(valid_img(), nc())
+      # Actual channel selection (it there is one)
+      maxchan <- max(as.numeric(c(input$schan, input$nchan, 1)), na.rm = T)
+      if (updatechan() == TRUE | nc() < maxchan) {
+        if (nc() >= 2) {
+          nchan <- 1
+          schan <- 2
+        } else {
+          nchan <- NULL
+          schan <- 1
+        }
+        updateSelectizeInput(
+          session,
+          'nchan',
+          choices = 1:nc(),
+          selected = nchan
+        )
+        updateSelectizeInput(
+          session,
+          'schan',
+          choices = 1:nc(),
+          selected = schan
+        )
+        updatechan <- reactiveVal(FALSE)
       }
-    updateSelectizeInput(session,'nchan', choices = 1:nc(), selected=nchan)
-    updateSelectizeInput(session,'schan', choices = 1:nc(), selected=schan)
-    updatechan <- reactiveVal(FALSE)
     }
-  })
+  )
 
   ### Pixel physical size ----
-  
+
   px_area <- reactiveVal(NA)
-  
+
   #### Observer for text input
-  observeEvent(input$getpxa,{
+  observeEvent(input$getpxa, {
     req(valid_img())
-    pxa <- tryCatch({
-      get_pxarea(valid_img())},
+    pxa <- tryCatch(
+      {
+        get_pxarea(valid_img())
+      },
       error = function(e) {
-        showNotification("Could not extract pixel dimensions. 
+        showNotification(
+          "Could not extract pixel dimensions. 
                          Try exporting using ome-tiff or enter it manually",
-                         type='error')
+          type = 'error'
+        )
         return("")
       }
     )
-    if (!is.null(pxa)){
-      updateTextInput(session,'pxarea',value=pxa)
+    if (!is.null(pxa)) {
+      updateTextInput(session, 'pxarea', value = pxa)
     }
   })
-  
+
   #### Observer for get button
   observe({
-    if (grepl('[^0-9\\.]',input$pxarea)){
-      showNotification("pixel area must be a numeric value. Ej 0.02",type = 'error')
-      updateTextInput(session,'pxarea',value="")
+    if (grepl('[^0-9\\.]', input$pxarea)) {
+      showNotification(
+        "pixel area must be a numeric value. Ej 0.02",
+        type = 'error'
+      )
+      updateTextInput(session, 'pxarea', value = "")
       px_area(NA)
     } else {
       px_area(as.numeric(input$pxarea))
     }
   })
-  
-  
+
   ### Background fluorescence ----
-  
+
   bmfi <- reactiveVal(0)
   ### Observer for text input
-  observeEvent(input$getbmfi,{
+  observeEvent(input$getbmfi, {
     req(sabgal())
     bmfi <- mean(sabgal())
-    if (!is.null(bmfi)){
-      updateTextInput(session,'bmfi',value=bmfi)
+    if (!is.null(bmfi)) {
+      updateTextInput(session, 'bmfi', value = bmfi)
     }
   })
   ### Observer for get button
   observe({
-    if (grepl('[^0-9\\.]',input$bmfi)){
-      showNotification("Background fluorescence must be a positive numeric value. Ej 0.02",type = 'error')
-      updateTextInput(session,'bmfi',value="0")
+    if (grepl('[^0-9\\.]', input$bmfi)) {
+      showNotification(
+        "Background fluorescence must be a positive numeric value. Ej 0.02",
+        type = 'error'
+      )
+      updateTextInput(session, 'bmfi', value = "0")
       bmfi(0)
     } else {
       bmfi(as.numeric(input$bmfi))
     }
   })
-  
+
   ## Nuclei  processing ----
-  
+
   ### Nuclei Thresholding ----
   nuclei <- reactive({
     validate(need(valid_img(), "Select an image and a channgel"))
     req(input$nchan)
     tryCatch(
-      get_channel(valid_img(),input$nchan),
-      error= function(e) {return(NULL)}
+      get_channel(valid_img(), input$nchan),
+      error = function(e) {
+        return(NULL)
+      }
     )
   })
 
   # Reactive to store nuclei blurred
   nuclei_b <- reactive({
     req(nuclei())
-    if (input$sigma > 0){
+    if (input$sigma > 0) {
       gblur(nuclei(), input$sigma)
     } else {
       nuclei()
     }
   })
-  
+
   # Reactive to store nuclei background subtracted
   nuclei_bgs <- reactive({
-    if (input$sback == TRUE){
+    if (input$sback == TRUE) {
       subtract_background(nuclei_b(), input$radius)
     } else {
       nuclei_b()
     }
-  }) 
-  
-  # Reactive to store nuclei thresholded 
+  })
+
+  # Reactive to store nuclei thresholded
   nuclei_th <- reactive({
     img <- nuclei_bgs()
-    img <- img >=  input$thres.n[1] & img <= input$thres.n[2]
+    img <- img >= input$thres.n[1] & img <= input$thres.n[2]
     fillHull(img)
   })
-  
+
   # ObserveEvent for otsu
-  observeEvent(input$runotsu.n,{
-    deft <- round(otsu(nuclei_bgs(),c(0,img_bitdepth()-1),img_bitdepth()))
-    updateSliderInput(session,'thres.n',value=c(deft,img_bitdepth()-2))
+  observeEvent(input$runotsu.n, {
+    deft <- round(otsu(nuclei_bgs(), c(0, img_bitdepth() - 1), img_bitdepth()))
+    updateSliderInput(session, 'thres.n', value = c(deft, img_bitdepth() - 2))
   })
-  
+
   # ObserveEvent for reset
-  observeEvent(input$reset.thn,{
-    updateSliderInput(session,'thres.n',value=c(0,img_bitdepth()- 1))
-  })  
-  
+  observeEvent(input$reset.thn, {
+    updateSliderInput(session, 'thres.n', value = c(0, img_bitdepth() - 1))
+  })
+
   # Handle count and filter status
   apply_th <- reactiveVal(FALSE)
-  
+
   ### Nuclei Segmentatiobn ----
-  
-  # Reactive expression to generate the final nuclei image 
+
+  # Reactive expression to generate the final nuclei image
   nuclei_seg <- reactiveVal(NULL)
   nuclei_objects <- reactiveVal(NULL)
 
-  # Segment when clicking apply 
-  observeEvent(input$ApplyTh,{
+  # Segment when clicking apply
+  observeEvent(input$ApplyTh, {
     req(nuclei_th())
-    if (all(input$thres.n == c(0,img_bitdepth()-1))){
-      showNotification("Nuclei threshold has not been set. Please set a threshold before counting",type='warning')
+    if (all(input$thres.n == c(0, img_bitdepth() - 1))) {
+      showNotification(
+        "Nuclei threshold has not been set. Please set a threshold before counting",
+        type = 'warning'
+      )
       return(NULL)
-    } 
-    if (length(unique(c(nuclei_th()))) == 1){
-      showNotification("Empty or full image after thresholding, modify the threshold and try againg")
+    }
+    if (length(unique(c(nuclei_th()))) == 1) {
+      showNotification(
+        "Empty or full image after thresholding, modify the threshold and try againg"
+      )
       return(NULL)
     }
     n_seg <- watershed(distmap(nuclei_th()))
     # n_objects <- computeFeatures.shape(n_seg)[,'s.area']
-    n_objects <- c(table(c(n_seg),exclude = 0)) # Way faster
+    n_objects <- c(table(c(n_seg), exclude = 0)) # Way faster
     apply_th(TRUE)
-    updateSliderInput(session, 'nsize',max=as.integer(max(n_objects)))
+    updateSliderInput(session, 'nsize', max = as.integer(max(n_objects)))
     nuclei_seg(n_seg)
     nuclei_objects(n_objects)
   })
-  
-  
+
   nuclei_afilt <- reactive({
     req(nuclei_objects())
     nobjs <- nuclei_objects()
     names(nobjs[nobjs < input$nsize[1] | nobjs > input$nsize[2]])
   })
-  
+
   # Update nuclei on edges values
   nuclei_onedges <- reactive({
     req(nuclei_seg())
     if (input$rmborder == TRUE) {
       unique(c(
-        nuclei_seg()[1,],
-        nuclei_seg()[nrow(nuclei_seg()),],
-        nuclei_seg()[,1],
-        nuclei_seg()[,ncol(nuclei_seg())])
-      )
+        nuclei_seg()[1, ],
+        nuclei_seg()[nrow(nuclei_seg()), ],
+        nuclei_seg()[, 1],
+        nuclei_seg()[, ncol(nuclei_seg())]
+      ))
     } else {
       NULL
     }
   })
-  
+
   # Reactive to compute nuclei filtered
   nuclei_filtered <- reactive({
     req(nuclei_seg())
-    labstofilter <- c(nuclei_afilt(),nuclei_onedges())
-    if (!is.null(labstofilter)){
-      rmObjects(nuclei_seg(),labstofilter , reenumerate = F)
+    labstofilter <- c(nuclei_afilt(), nuclei_onedges())
+    if (!is.null(labstofilter)) {
+      rmObjects(nuclei_seg(), labstofilter, reenumerate = F)
     } else {
       nuclei_seg()
     }
   })
-  
+
   # Reactive to compute nuclei filtered
   nuclei_count <- reactive({
     req(nuclei_filtered())
     length(unique(c(nuclei_filtered()))) - 1
   })
-  
-  
+
   # Reset apply_th when loading a new image
-  observeEvent(imgpath(),{
+  observeEvent(imgpath(), {
     apply_th(FALSE)
   })
-  
+
   # Reset apply_th when changing threshold
-  observeEvent(input$thres.n,{
+  observeEvent(input$thres.n, {
     apply_th(FALSE)
   })
-  
-  
-  
+
   ## SABGAL Processing
-  
+
   # Create sabgal image when selecting a channel
   sabgal <- reactive({
-    validate(need(valid_img(),"Select an image and channel"))
+    validate(need(valid_img(), "Select an image and channel"))
     req(input$schan)
     tryCatch(
-      get_channel(valid_img(),input$schan),
-      error= function(e) {return(NULL)}
+      get_channel(valid_img(), input$schan),
+      error = function(e) {
+        return(NULL)
+      }
     )
   })
-  
+
   # Reactive storing thresholded sabgal
   sabgal_th <- reactive({
     req(sabgal())
     sabgal() >= input$thres.s[1] & sabgal() <= input$thres.s[2]
   })
-  
+
   # ObserveEvent for otsu
-  observeEvent(input$runotsu.s,{
+  observeEvent(input$runotsu.s, {
     req(sabgal())
-    deft <- round(otsu(sabgal(),c(0,img_bitdepth()-1),img_bitdepth()),1)
-    updateSliderInput(session,'thres.s',value=c(deft,img_bitdepth()- 2))
+    deft <- round(otsu(sabgal(), c(0, img_bitdepth() - 1), img_bitdepth()), 1)
+    updateSliderInput(session, 'thres.s', value = c(deft, img_bitdepth() - 2))
   })
-  
+
   # ObserveEvent for reset
-  observeEvent(input$reset.ths,{
-    updateSliderInput(session,'thres.s',value=c(0,img_bitdepth()- 1))
+  observeEvent(input$reset.ths, {
+    updateSliderInput(session, 'thres.s', value = c(0, img_bitdepth() - 1))
   })
-  
-  # Reactive to get sabgal coordinates 
+
+  # Reactive to get sabgal coordinates
   hover_coords <- reactive({
-    coords <- unlist(input$splot_hover[c('x','y')])
-    if (!is.null(coords)){
-      if (any(coords < 0)){
+    coords <- unlist(input$splot_hover[c('x', 'y')])
+    if (!is.null(coords)) {
+      if (any(coords < 0)) {
         coords <- NULL
       } else {
         coords <- round(coords)
       }
     }
   })
-  
+
   # Bgal stats
   sabgal_stats <- reactive({
-    calc_bgalstats(sabgal(),sabgal_th(),hover_coords())
+    calc_bgalstats(sabgal(), sabgal_th(), hover_coords())
   })
-  
-  
-  ### Measure and runAll ---- 
-  
+
+  ### Measure and runAll ----
+
   batch_results <- reactiveVal(empty_res())
-  
+
   # Reset button
-  observeEvent(input$reset,{
+  observeEvent(input$reset, {
     batch_results(empty_res())
   })
-  
+
   # Observer for "Measure" button
   observeEvent(input$run, {
-    req(imgpath(),input$schan)
-    withProgress({
-      # Process image
-      imgpath <- file.path(mydir(), imgpath())
-      res <- process_single_image(imgpath, input)
-      res <- c(list(imgpath()),res)
-      # Update batch_results
-      cbres <- batch_results()
-      cbres[nrow(cbres) + 1,] <- res
-      batch_results(cbres)
-    }, message = "Calculating current image")
+    req(imgpath(), input$schan)
+    withProgress(
+      {
+        # Process image
+        imgpath <- file.path(mydir(), imgpath())
+        res <- process_single_image(imgpath, input)
+        res <- c(list(imgpath()), res)
+        # Update batch_results
+        cbres <- batch_results()
+        cbres[nrow(cbres) + 1, ] <- res
+        batch_results(cbres)
+      },
+      message = "Calculating current image"
+    )
   })
-  
+
   # Observer for "Run all images" button
   observeEvent(input$run.all, {
     req(mydir())
     req(input$schan)
     # Get filtered files using the reactive value
     if (length(filtered_files()) == 0) {
-      showNotification("No files found matching the current filter", type = "message")
+      showNotification(
+        "No files found matching the current filter",
+        type = "message"
+      )
       return()
     }
     # Process all images
@@ -679,53 +731,60 @@ server <- function(input, output, session) {
     # Process all images
     batch_results(process_all_images(image_files, input))
   })
-  
-  
+
+  # Observer for "Click Here To Learn More"
+  observeEvent(input$help, {
+    browseURL("https://github.com/antotartier/FAB-Gal/wiki/Desktop-application")
+  })
+
   ## Outputs ----
-  
+
   ### Nuclei Plots ----
   output$nplot <- renderPlot({
     req(nuclei())
-    if (apply_th() == TRUE){
+    if (apply_th() == TRUE) {
       img <- colorLabels(nuclei_filtered())
     } else {
-      if (all(input$thres.n == c(0,img_bitdepth()-1))){
+      if (all(input$thres.n == c(0, img_bitdepth() - 1))) {
         req(nuclei())
-        img <- normalize(nuclei(),inputRange=c(0,img_bitdepth()-1))
+        img <- normalize(nuclei(), inputRange = c(0, img_bitdepth() - 1))
       } else {
         img <- nuclei_th()
       }
     }
     req(img)
-    display(img,method='raster')
+    display(img, method = 'raster')
   })
-  
+
   ### SABGAL Plot ----
   output$splot <- renderPlot({
-    validate(need(sabgal(),"Select an image and channel"))
-    if (all(input$thres.s == c(0,img_bitdepth()-1))){
-      img <- normalize(sabgal(),inputRange=c(0,img_bitdepth()-1))
+    validate(need(sabgal(), "Select an image and channel"))
+    if (all(input$thres.s == c(0, img_bitdepth() - 1))) {
+      img <- normalize(sabgal(), inputRange = c(0, img_bitdepth() - 1))
     } else {
       req(sabgal_th())
       img <- sabgal_th()
     }
-    display(img,method='raster')
+    display(img, method = 'raster')
   })
-  
+
   ### Nuclei stats  ----
   output$stats.n <- renderPrint({
-    validate(need(nuclei(),"Select an image and channel"))
-    if (!apply_th()){
+    validate(need(nuclei(), "Select an image and channel"))
+    if (!apply_th()) {
       outstr <- "NA (press count)"
-    } else {outstr <- as.character(nuclei_count())}
+    } else {
+      outstr <- as.character(nuclei_count())
+    }
     cat('Nuclei count: ', outstr)
   })
-  
+
   ### SABGAL stats ----
   output$stats.s <- renderPrint({
     req(sabgal_stats())
-    cat(sabgal_stats())})
-  
+    cat(sabgal_stats())
+  })
+
   ### Results table ----
   output$results_table <- renderTable({
     results <- batch_results()
@@ -733,7 +792,7 @@ server <- function(input, output, session) {
       results
     }
   })
-  
+
   ### Download results ----
   output$download_results <- downloadHandler(
     filename = function() {
@@ -748,4 +807,3 @@ server <- function(input, output, session) {
 
 # Run the application  ----
 shinyApp(ui = ui, server = server)
-
