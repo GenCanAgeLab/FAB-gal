@@ -62,7 +62,7 @@ filter” button in the lateral panel (see below)
 </p>
 
 ## Side bar panel
-<p align="left" style="float:left;>
+<p align="left" style="float:left;">
 <img src="Help_images/clipboard-4090961768.png" align="center" />
 </p>
 The first section of the sidebar panel is the channel selection. The app
