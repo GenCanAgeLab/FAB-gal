@@ -19,8 +19,9 @@ multiple images.
 # Description of FABGAL app
 
 ## Input files section
-
-<img src="Help_images/clipboard-1984726604.png" align="center" />
+<p align="center">
+<img src="Help_images/clipboard-1984726604.png"/>
+</p>
 
 To start using this tool, first use the browse button to select a local
 folder from your computer containing your image files. The app will scan
