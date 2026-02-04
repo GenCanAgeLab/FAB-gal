@@ -1,17 +1,13 @@
-# Load libraries
-
+import numpy as np
+from typing import List
+from numpy.typing import NDArray
 from skimage.restoration import rolling_ball
 from skimage.transform import rescale,resize
 from skimage.util import img_as_ubyte, img_as_float
 from scipy.ndimage import uniform_filter
-import numpy as np
+from pathlib import Path
+from bioio.writers import OmeTiffWriter
 
-from numpy.typing import NDArray
-from typing import List
-
-import functions
-
-# Functions
 
 def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, psize: float = None) -> List[float]:
     """
@@ -75,7 +71,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
     
     return [NpxPos, NpxTot, AreaPos, AreaTot, RawIntDen]
 
-## Function to substract background
+
 def subtract_background(img, radius : int, scale : int = 8) -> NDArray[np.uint8]:
     """
     Subtracts the background signal of an input image using the rolling ball algorithm.
@@ -107,3 +103,52 @@ def subtract_background(img, radius : int, scale : int = 8) -> NDArray[np.uint8]
                 order=1,
                 preserve_range=True)
     return img_as_ubyte(img-bg)
+
+def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out_path: str):
+    """
+    Docstring para process_biapy_input
+    """
+    # Load nuclei channel
+    try:
+        imgdata = img.get_image_data("YX",C=nuclei_ch)
+    except IndexError as e:
+        raise IndexError(f"\nERROR: Image does not have nuclei input channel. Please check that nuclei channel parameters are correct.") from e
+
+    # Apply subtract background if needed
+    if apply_sbg:
+        OmeTiffWriter.save(
+            subtract_background(imgdata,
+                                radius=sbg_rad), 
+                    str(out_path),
+                    dim_order="YX")
+    else:
+        OmeTiffWriter.save(imgdata,
+                    str(out_path),
+                    dim_order="YX")
+        
+
+def load_input(input_folder: str) -> List:
+    """
+    Docstring para load_input
+    """
+    # Check input folder
+    try:
+        input_folder = Path(input_folder)
+
+        if not input_folder.exists():
+            raise FileNotFoundError(f"Folder does not exist: {input_folder}")
+
+        if not input_folder.is_dir():
+            raise NotADirectoryError(f"Not a directory: {input_folder}")
+
+    except Exception as e:
+        print(f"ERROR: Folder validation failed: {e}")
+
+    # Check file extension
+    allowed_ext = {".tif", ".tiff"}
+    myfiles = [f for f in input_folder.iterdir() if not f.name.startswith(".")] # Read visible files
+
+    for inf in myfiles:
+        if inf.is_file() and inf.suffix.lower() not in allowed_ext:
+            raise ValueError(f"Invalid file found: {inf.name}. Please ensure all items in input folder are .tif or .tiff.")
+    return myfiles
