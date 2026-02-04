@@ -2,3 +2,4 @@ __pycache__/
 biapy_input/
 biapy_output/
 .Rproj.user
+.Rhistory
