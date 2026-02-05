@@ -26,11 +26,11 @@ class FABGalConfig:
         **out_path** (`str`): Output folder where the results folder will be generated.
 
     ### Image parameters:
-        **nuclei_ch** (`int`): Number of the channel containing nuclei staining signal. If `None` (eg. tissue images with no nuclei counterstain), then FAB-gal will not run the nuclei count and will not compute CTF.
+        **nuclei_ch** (`int`): Number of the channel containing nuclei staining signal. If `None` (eg. tissue images with no nuclei counterstain), then FAB-gal will not run the nuclei count and will not compute CTF per nuclei.
 
         **bgal_ch** (`int`): Number of the channel containing B-gal staining signal.
 
-        **pixel_area** (`float`): Pixel size of input images. For metadata-enriched images, it can be left as `None`, and FAB-gal will get it from metadata information. If there is no `pixel_area`, either from user input or metadata, then it will default to 1,  a warning will be printed, and CTF will not be computed.
+        **pixel_area** (`float`): Pixel size of input images. For metadata-enriched images, it can be left as `None`, and FAB-gal will get it from metadata information. If there is no `pixel_area`, either from user input or metadata, then it will default to 1, and a warning will be printed.
 
     ### β-Gal parameters:
         **backgr_val** (`int`): β-Gal mean fluorescence intensity of a background image. If `None`, FAB-gal will try to get it from `backgr_img`. If `backgr_img` is also `None`, then it will print a warning and not compute CTF.
@@ -39,8 +39,8 @@ class FABGalConfig:
 
         **bgal_th** (`int`): Intensity value to use as threshold to determine positive β-Gal pixels.
 
-    ### Substract background parameters (for nuclei channel processing)
-        **sbg_rad** (`int`): Radius of substract background algorithm to be used if substract_background = `True`. Should be adjusted depending on nuclei size.
+    ### Subtract background parameters (for nuclei channel processing)
+        **sbg_rad** (`int`): Radius of subtract background algorithm to be used if subtract_background = `True`. Should be adjusted depending on nuclei size.
 
     ### BiaPy parameters
         **config_file** (`str`): Path to BiaPy YAML configuration file.
@@ -75,7 +75,7 @@ class FABGalConfig:
     backgr_img: str | None
     bgal_th: int
 
-    # Substract background parameters (for nuclei channel processing)
+    # Subtract background parameters (for nuclei channel processing)
     sbg_rad: int
 
     # BiaPy parameters
