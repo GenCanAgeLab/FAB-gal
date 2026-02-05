@@ -3,15 +3,30 @@ from re import sub
 from bioio import BioImage
 from bioio_base.exceptions import UnsupportedFileFormatError
 import logging
+from dataclasses import asdict
+import yaml
 
 from .helpers import calculate_bgal,generate_biapy_input,load_input
 from .run_biapy import run_biapy
 from .calculate_CTF import calculate_CTF
 from .config import FABGalConfig
 
-#### Deactivate messages (except errors) for Bioio ####
+#### Log options ####
 
+import logging
+
+# Set up logging 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+)
+
+#  Silence Bioio warnings 
 logging.getLogger("bioio").setLevel(logging.ERROR)
+
+#  Get module logger 
+logger = logging.getLogger(__name__)
 
 #####################
 
@@ -35,6 +50,9 @@ def run_fabgal(cfg: FABGalConfig):
 
     # Create B-Gal results list
     bres = {}
+
+    # Start B-Gal quantification message
+    logger.info("Starting B-Gal quantification...")
 
     # Start iteration
     filenum = len(myfiles)
@@ -84,6 +102,8 @@ def run_fabgal(cfg: FABGalConfig):
         for k, (npx, npxtot, areapos, areatot, pxarea, RawIntDen) in bres.items():
             bgal_f.write(f"{k}\t{npx}\t{npxtot}\t{areapos}\t{areatot}\t{pxarea}\t{RawIntDen}\n")
 
+    # End of B-Gal quantification message
+    logger.info("Finished B-Gal quantification")
 
     ####### Run BiaPy nuclei count if specified #######
 
@@ -96,6 +116,19 @@ def run_fabgal(cfg: FABGalConfig):
         calculate_CTF(cfg)
     
     ####### Save config file #######
+
+    cfg_dict = asdict(cfg)
+    config_path = results_dir / "FABGal_config.yaml"
+
+    with config_path.open("w") as f:
+        yaml.safe_dump(
+            asdict(cfg),
+            f,
+            sort_keys=False,
+        )
+
+    ####### End message #######
+    logger.info("Finished analysis!")
 
 
 

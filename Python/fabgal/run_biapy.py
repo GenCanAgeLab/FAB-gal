@@ -1,4 +1,6 @@
+from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
+import logging
 from biapy import BiaPy
 import pandas as pd
 from skimage import io
@@ -6,6 +8,13 @@ from skimage.color import label2rgb
 import numpy as np
 import shutil
 from .config import FABGalConfig
+
+#### Log options ####
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def run_biapy(cfg: FABGalConfig):
     """
@@ -16,18 +25,33 @@ def run_biapy(cfg: FABGalConfig):
     """
     # Results dir for BiaPy
     results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"
-    biapy_result_dir = results_dir / "biapy_output"
+    biapy_result_dir = results_dir / f"biapy_output_run{cfg.run_id}"
+    biapy_log = results_dir / f"biapy_{cfg.experiment_name}_run{cfg.run_id}.log"
+
+    # If there is a previous execution of BiaPy with the same name, delete previous subtracted images
+    sub_images_out = results_dir / f"subtracted_images_run{cfg.run_id}"
+    if sub_images_out.exists():
+        shutil.rmtree(sub_images_out)
 
     ########### Create and run the BiaPy job ###########
 
+    # Start message
+    logger.info("Starting BiaPy nuclei quantification...")
 
-    biapy = BiaPy(cfg.config_file,
-                  result_dir = biapy_result_dir,
-                  name = cfg.experiment_name,
-                  run_id = cfg.run_id,
-                  gpu = cfg.gpu)
+    # Catch stdout and stderr from BiaPy and redirect it
+    with biapy_log.open("w") as f, redirect_stdout(f), redirect_stderr(f):
+
+        biapy = BiaPy(cfg.config_file,
+                    result_dir = biapy_result_dir,
+                    name = cfg.experiment_name,
+                    run_id = cfg.run_id,
+                    gpu = cfg.gpu)
     
-    biapy.run_job()
+    
+        biapy.run_job()
+    
+    # Final message
+    logger.info("Finished BiaPy quantification")
 
 
     ########### Process BiaPy output ###########
@@ -67,13 +91,13 @@ def run_biapy(cfg: FABGalConfig):
             img = io.imread(inf)
             img = label2rgb(img)*255
             img = img.astype(np.uint8)
-            io.imsave(biapy_result_dir / f"{inf.stem}_mask.png",img)
+            io.imsave(biapy_result_dir / f"{inf.stem}_mask.png",img, check_contrast = False)
             inf.unlink()
     
     #### Save subtracted images from BiaPy input (if generated) ####
 
     if cfg.apply_subtract_background:
-        Path("biapy_input").rename(f"{results_dir}/subtracted_images")
+        Path("biapy_input").rename(sub_images_out)
 
     ## If BiaPy ended correctly and sustract_background was not active, we delete biapy_input folder
     if not cfg.apply_subtract_background:

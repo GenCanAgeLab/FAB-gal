@@ -6,7 +6,14 @@ from skimage.transform import rescale,resize
 from skimage.util import img_as_ubyte, img_as_float
 from scipy.ndimage import uniform_filter
 from pathlib import Path
+import logging
 from bioio.writers import OmeTiffWriter
+
+#### Log options ####
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, pxarea: float = None) -> List[float]:
@@ -47,7 +54,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
             
         # If there is no info about physical pixel size, defaults to 1 to perform calculations.
         else:
-            print("\nWARNING: Image does not have pixel physical sizes. Using default of 1 for B-Gal calculations.", end="\r", flush=True)
+            logger.info("\nWARNING: Image does not have pixel physical sizes. Using default of 1 for B-Gal calculations.", end="\r", flush=True)
             pxInfo = False
             pxarea = 1
     
@@ -147,7 +154,7 @@ def load_input(input_folder: str) -> List:
             raise NotADirectoryError(f"Not a directory: {input_folder}")
 
     except Exception as e:
-        print(f"ERROR: Folder validation failed: {e}")
+        logger.info(f"ERROR: Folder validation failed: {e}")
 
     # Check file extension
     allowed_ext = {".tif", ".tiff"}

@@ -1,6 +1,16 @@
 from pathlib import Path
 import pandas as pd
+import logging
 from .config import FABGalConfig
+
+
+
+#### Log options ####
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 def calculate_CTF(cfg: FABGalConfig):
@@ -10,6 +20,9 @@ def calculate_CTF(cfg: FABGalConfig):
     Args:
         cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-Gal.
     """
+
+    # Start message
+    logger.info("Starting data processing and CTF calculation...")
 
     # Load BGal and nuclei stats
     results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"
@@ -67,3 +80,6 @@ def calculate_CTF(cfg: FABGalConfig):
             CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
 
             CTFind.to_csv(results_dir / f"{cfg.experiment_name}_results_perindividual.tsv")
+    
+    # End message
+    logger.info("Finished data processing")
