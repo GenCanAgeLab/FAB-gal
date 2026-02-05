@@ -126,7 +126,7 @@ ui <- fluidPage(
       checkboxInput('rmborder', "Remove on edges", TRUE),
       sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
     ),
-    ### Pixel size and MFI panel ----
+    ### Pixel size, MFI and output dir panel ----
     wellPanel(
       style = "background: #dccce6",
       strong('Pixel area (microns^2)'),
@@ -154,6 +154,13 @@ ui <- fluidPage(
           align = 'center',
           actionButton('getbmfi', 'Get')
         )
+      ),
+      checkboxInput("saven","Save nuclei segmentation)",value = F),
+      textOutput("outdirtext"),
+      shinyDirButton(
+        id = 'outdir',
+        label = 'Browse',
+        title = 'output dir'
       )
     )
   ),
@@ -280,7 +287,8 @@ ui <- fluidPage(
     .well {padding:2px; margin-bottom: 2px;}
     .form-group {margin-bottom: 2px;}
     .checkbox label {font-weight: bold;}
-    '
+    .shiny-notification {overflow-wrap: break-word;}
+      '
     )
   )
 )
@@ -290,12 +298,13 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   ## Directory handling ----
 
-  roots <- c("Examples" = './Examples', 'Home' = fs::path_home())
+  roots <- c("Examples" = './Examples', 'Home' = fs::path_home(), getVolumes()())
   # roots <- getVolumes()()
-
+  
+  ### Input directory ----
   ## Client connection for file system
-  shinyDirChoose(input, 'dir', roots = roots, session = session)
-
+  shinyDirChoose(input, 'dir', roots = roots, session = session,defaultRoot = "Home")
+  
   ## Handeling selected dir
   ## It also prevent updating if the browse dialog is cancelled
   current_mydir <- reactiveVal(NULL)
@@ -353,8 +362,31 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'thres.s', value = c(0, 255), min = 0, max = 255)
     updateTextInput(session, 'bmfi', value = "0")
     updateTextInput(session, 'pxarea', value = "")
+    outdir(mydir()) # Set output dir to current dir
   })
-
+  
+  ### Output directory ----
+  shinyDirChoose(input, 'outdir', roots = roots, session = session, 
+                 defaultRoot = "Home")
+  
+  outdir <- reactiveVal(NULL)
+  observe({
+    outdir(parseDirPath(roots, input$outdir))
+  })
+  # Notify output dir when save nuclei is enabled
+  observeEvent(input$saven,{
+    req(outdir())
+    if (input$saven == TRUE){
+      showNotification("Output directory will be:",outdir(),type="message")
+    }
+  })
+  
+  observeEvent(outdir(),{
+    if (input$saven == TRUE){
+      showNotification("Output directory will be:",outdir(),type="message")
+    }
+  })
+  
   ## Image loading ----
 
   ### Read image ----
@@ -703,7 +735,7 @@ server <- function(input, output, session) {
       {
         # Process image
         imgpath <- file.path(mydir(), imgpath())
-        res <- process_single_image(imgpath, input)
+        res <- process_single_image(imgpath, input, outdir())
         res <- c(list(imgpath()), res)
         # Update batch_results
         cbres <- batch_results()
@@ -729,7 +761,7 @@ server <- function(input, output, session) {
     # Process all images
     image_files <- file.path(mydir(), filtered_files())
     # Process all images
-    batch_results(process_all_images(image_files, input))
+    batch_results(process_all_images(image_files, input,outdir()))
   })
 
   # Observer for "Click Here To Learn More"
