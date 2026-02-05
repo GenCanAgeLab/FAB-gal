@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+from re import sub
 import logging
 from .config import FABGalConfig
 
@@ -48,9 +49,11 @@ def calculate_CTF(cfg: FABGalConfig):
     if cfg.backgr_val is not None:
         BGal_backgr = cfg.backgr_val
     elif cfg.backgr_img is not None:
-        BGal_backgr = bgaldf.at[cfg.backgr_img, 'BGal_RawIntDen'] / bgaldf.at[cfg.backgr_img, 'NpxTot']
+        backgr_img = sub(r'(?i)\.tiff?$', '', cfg.backgr_img)
+        BGal_backgr = bgaldf.at[backgr_img, 'BGal_RawIntDen'] / bgaldf.at[backgr_img, 'NpxTot']
     else:
         computeCTF = False
+        print("No B-gal background information supplied. Will not compute CTF.")
 
     # Merge nuclei and B-Gal data
     resdf = pd.merge(bgaldf,nucleitot,how='outer',on='File')
