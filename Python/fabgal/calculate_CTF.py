@@ -23,9 +23,9 @@ def calculate_CTF(cfg: FABGalConfig):
 
     # Filter nuclei below area threshold
     nucleidf_pxarea = pd.merge(nucleidf,bgaldf[['File','PxArea']],how='inner',on='File')
-    nucleidf_pxarea['nucl_thr_area'] = nucleidf_pxarea.PxArea * cfg.nuclei_thr
+    nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
 
-    nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_area]
+    nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
 
     # Count nuclei per image file 
     nucleitot = nucleidf_filt['File'].value_counts()
