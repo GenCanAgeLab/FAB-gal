@@ -19,7 +19,7 @@ class FABGalConfig:
     # Image parameters
     nuclei_ch: int | None
     bgal_ch: int 
-    pixel_size: float | None
+    pixel_area: float | None
 
     # β-Gal background parameters
     backgr_val: int | None 

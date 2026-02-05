@@ -2,12 +2,18 @@ from pathlib import Path
 from re import sub
 from bioio import BioImage
 from bioio_base.exceptions import UnsupportedFileFormatError
+import logging
 
 from .helpers import calculate_bgal,generate_biapy_input,load_input
 from .run_biapy import run_biapy
 from .calculate_CTF import calculate_CTF
 from .config import FABGalConfig
 
+#### Deactivate messages (except errors) for Bioio ####
+
+logging.getLogger("bioio").setLevel(logging.ERROR)
+
+#####################
 
 def run_fabgal(cfg: FABGalConfig):
     """
@@ -31,9 +37,10 @@ def run_fabgal(cfg: FABGalConfig):
     bres = {}
 
     # Start iteration
-    for inf in myfiles:
+    filenum = len(myfiles)
+    for i, inf in enumerate(myfiles, start=1):
 
-        print("Doing file " + inf.name)
+        print(f"Doing file {i} of {filenum}", end="\r", flush=True)
 
         ####### Open image #######
         try:
@@ -62,19 +69,20 @@ def run_fabgal(cfg: FABGalConfig):
         bres[sub(r'(?i)\.tiff?$', '', inf.name)] = calculate_bgal(img,
                                                                   cfg.bgal_ch,
                                                                   cfg.bgal_th,
-                                                                  psize = cfg.pixel_size)
-        
+                                                                  pxarea = cfg.pixel_area)
+
+
     ####### Output B-Gal calculations to file #######
     BGalres = results_dir / f"{cfg.experiment_name}_Raw_BGal_results.tsv"
 
     with BGalres.open('w') as bgal_f:
 
         # Create file header
-        bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tBgal_RawIntDen\n")
+        bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tPxArea\tBgal_RawIntDen\n")
 
         # Write calculations to file       
-        for k, (npx, npxtot, areapos, areatot, RawIntDen) in bres.items():
-            bgal_f.write(f"{k}\t{npx}\t{npxtot}\t{areapos}\t{areatot}\t{RawIntDen}\n")
+        for k, (npx, npxtot, areapos, areatot, pxarea, RawIntDen) in bres.items():
+            bgal_f.write(f"{k}\t{npx}\t{npxtot}\t{areapos}\t{areatot}\t{pxarea}\t{RawIntDen}\n")
 
 
     ####### Run BiaPy nuclei count if specified #######

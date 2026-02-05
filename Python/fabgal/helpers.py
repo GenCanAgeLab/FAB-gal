@@ -9,7 +9,7 @@ from pathlib import Path
 from bioio.writers import OmeTiffWriter
 
 
-def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, psize: float = None) -> List[float]:
+def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, pxarea: float = None) -> List[float]:
     """
     Calculates the area and intensity of B-gal positive regions in an image.
 
@@ -18,7 +18,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
 
     Args:
         img: A BioImage object containing pixel size metadata.
-        psize (float): Pixel size of the image. Defaults to None, where the info will be extracted from the image or, if no info is found, defaults to 1.
+        parea (float): Pixel area of the image. Defaults to None, where the info will be extracted from the image or, if no info is found, defaults to 1.
         bgal_ch (int): The channel index for the B-gal signal.
         bgal_thmin (int): The minimum pixel intensity threshold.
         bgal_thmax (int, optional): The maximum pixel intensity threshold. 
@@ -31,36 +31,41 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
             2. Total number of pixels (NpxTot)
             3. Physical area of positive region (AreaPos)
             4. Physical area of the image (AreaTot)
-            5. Raw integrated density of positive pixels (Bgal_RawIntDen)
+            5. Pixel area of the image (pxarea)
+            6. Raw integrated density of positive pixels (Bgal_RawIntDen)
     """
-    # Calculate area of a single pixel (Y size * X size).
-    pixInfo = True
-    if psize is not None:
-        print(f"Using user input {psize} as physical size.")
-        pxarea = psize * psize #  If pixel size information is manually entered, use user input.
+    ##### Get pixel area info #####
 
-    elif img.physical_pixel_sizes[1] is not None and img.physical_pixel_sizes[2] is not None:
-         # If there is information in the image and there is no user input, use embedded information.
-        print(f"Image pixel sizes are {img.physical_pixel_sizes}")
-        pxarea = img.physical_pixel_sizes[1] * img.physical_pixel_sizes[2]
+    pxInfo = True
 
-    else:
-        print("\nWARNING: Image does not have pixel physical sizes. Using default of 1 for B-Gal calculations.")
-        pixInfo = False
-        pxarea = 1 #  If there is no info about physical pixel size, defaults to 1 to perform calculations.
+    # If user does not input a pixel area
+    if pxarea is None:
+
+        # If there is information in the image and there is no user input, use embedded information.
+        if img.physical_pixel_sizes[1] is not None and img.physical_pixel_sizes[2] is not None:
+            pxarea = img.physical_pixel_sizes[1] * img.physical_pixel_sizes[2]
+            
+        # If there is no info about physical pixel size, defaults to 1 to perform calculations.
+        else:
+            print("\nWARNING: Image does not have pixel physical sizes. Using default of 1 for B-Gal calculations.", end="\r", flush=True)
+            pxInfo = False
+            pxarea = 1
     
-    # Extract image data for the specific channel
+    ##### Extract image data for the specific channel #####
+
     imgdata = img.get_image_data("YX", C=bgal_ch)
     
     
-    # Create a boolean mask for pixels within the threshold
+    ##### Create a boolean mask for pixels within the threshold #####
+
     mask = (imgdata >= bgal_thmin) & (imgdata <= bgal_thmax)
     
-    # Calculate stats
+    ##### Calculate stats #####
+
     NpxPos = np.sum(mask).item()
     NpxTot = imgdata.size
 
-    if pixInfo is True:
+    if pxInfo is True:
         AreaPos = NpxPos * pxarea
         AreaTot = NpxTot * pxarea
     else:
@@ -69,7 +74,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, ps
     
     RawIntDen = np.sum(imgdata[mask]).item()
     
-    return [NpxPos, NpxTot, AreaPos, AreaTot, RawIntDen]
+    return [NpxPos, NpxTot, AreaPos, AreaTot, pxarea, RawIntDen]
 
 
 def subtract_background(img, radius : int, scale : int = 8) -> NDArray[np.uint8]:
