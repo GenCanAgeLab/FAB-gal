@@ -330,7 +330,7 @@ server <- function(input, output, session) {
     }
   })
   mydir <- reactive({
-    req(current_mydir())
+    validate(need(current_mydir(),"Please select a folder"))
     current_mydir()
   })
 
@@ -360,8 +360,10 @@ server <- function(input, output, session) {
     )
   })
 
-  ## Manage selected image
+  ## Manage selected image 
+  # a reactiveVal is used to allow reset it when open a folder)
   imgpath <- reactiveVal(NULL)
+  
   observeEvent(input$imgpath, {
     imgpath(input$imgpath)
   })
@@ -381,6 +383,7 @@ server <- function(input, output, session) {
   shinyDirChoose(input, 'outdir', roots = roots, session = session, 
                  defaultRoot = "Home")
   
+  # A reactiveVal is used to allow setting it by different means
   outdir <- reactiveVal(NULL)
   observe({
     outdir(parseDirPath(roots, input$outdir))
@@ -402,10 +405,12 @@ server <- function(input, output, session) {
   ## Image loading ----
 
   ### Read image ----
-  ebimg <- reactive({
-    req(imgpath(), mydir())
+  valid_img <- reactive({
+    validate(need(mydir(),"Please select a folder"))
+    validate(need(imgpath(),"Please select an image"))
+    
     # Read image
-    tryCatch(
+    imgobj <- tryCatch(
       {
         myreadimg(file.path(mydir(), imgpath()))
       },
@@ -417,35 +422,33 @@ server <- function(input, output, session) {
         return(NULL)
       }
     )
-  })
-
-  ### Check valid image ----
-  valid_img <- reactive({
-    req(ebimg())
-    if (length(dim(ebimg())) > 3) {
+    if (is.null(imgobj)){return(NULL)}
+    if (length(dim(imgobj)) > 3) {
       showNotification(
         "Image with more than 3 dimesions. Only images with XYC dimensions are supported",
         type = 'error'
       )
       return(NULL)
     }
-    if (!grepl('^XYC', coreMetadata(ebimg())$dimensionOrder)) {
+    if (!grepl('^XYC', coreMetadata(imgobj)$dimensionOrder)) {
       showNotification(
         paste0(
-          "Image dimesion order should be XYC. Your image is: coreMetadata(ebimg)$dimensionOrder"
+          "Image dimesion order should be XYC. Your image is: coreMetadata(imgobj)$dimensionOrder"
         ),
         type = 'error'
       )
       return(NULL)
     }
-    ebimg()
+    imgobj
   })
+
 
   ### Number of channels ----
   nc <- reactive({
     req(valid_img())
     coreMetadata(valid_img())$sizeC
   })
+  
   ### Image bitdepth ----
   img_bitdepth <- reactive({
     req(valid_img())
@@ -453,37 +456,35 @@ server <- function(input, output, session) {
   })
 
   ### Valid image actions ----
+  
+  nchan <- reactive({
+    input$nchan
+  })
+  
+  schan <- reactive({
+    input$schan    
+  })
+  
   # Logic to update channels only when the first image is open
   updatechan <- reactiveVal(TRUE)
-  observe(
-    {
-      req(valid_img(), nc())
-      # Actual channel selection (it there is one)
-      maxchan <- max(as.numeric(c(input$schan, input$nchan, 1)), na.rm = T)
-      if (updatechan() == TRUE | nc() < maxchan) {
-        if (nc() >= 2) {
-          nchan <- 1
-          schan <- 2
-        } else {
-          nchan <- NULL
-          schan <- 1
-        }
-        updateSelectizeInput(
-          session,
-          'nchan',
-          choices = 1:nc(),
-          selected = nchan
-        )
-        updateSelectizeInput(
-          session,
-          'schan',
-          choices = 1:nc(),
-          selected = schan
-        )
-        updatechan(FALSE)
+  observe({
+    req(valid_img(), nc())
+    # Actual channel selection (it there is one)
+    maxchan <- max(as.numeric(c(schan(), nchan(), 1)), na.rm = T)
+    # update selectize inputs if required
+    if (updatechan() == TRUE | nc() < maxchan) {
+      if (nc() >= 2) {
+        n <- 1
+        s <- 2
+      } else {
+        n <- NULL
+        s <- 1
       }
+      updateSelectizeInput(session,'nchan',choices = 1:nc(),selected = n)
+      updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
+      updatechan(FALSE)
     }
-  )
+  })
 
   ### Pixel physical size ----
 
@@ -549,14 +550,15 @@ server <- function(input, output, session) {
     }
   })
 
+  
   ## Nuclei  processing ----
 
-  ### Nuclei Thresholding ----
+  ### Nuclei Preprocessing ----
   nuclei <- reactive({
-    validate(need(valid_img(), "Select an image and a channgel"))
-    req(input$nchan)
+    req(valid_img())
+    validate(need(nchan(), "Select a channel"))
     tryCatch(
-      get_channel(valid_img(), input$nchan),
+      get_channel(valid_img(), nchan()),
       error = function(e) {
         return(NULL)
       }
@@ -590,6 +592,7 @@ server <- function(input, output, session) {
 
   # Reactive to store nuclei thresholded
   nuclei_th <- reactive({
+    req(nuclei_bgs())
     imgobj <- nuclei_bgs()
     imgobj <- imgobj >= input$thres.n[1] & imgobj <= input$thres.n[2]
     fillHull(imgobj)
@@ -606,10 +609,11 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'thres.n', value = c(0, img_bitdepth() - 1))
   })
 
-  # Handle count and filter status
-  apply_th <- reactiveVal(FALSE)
 
   ### Nuclei Segmentatiobn ----
+ 
+  # Handle count and filter status
+  apply_th <- reactiveVal(FALSE)
 
   # Reactive expression to generate the final nuclei image
   nuclei_seg <- reactiveVal(NULL)
@@ -640,14 +644,13 @@ server <- function(input, output, session) {
     nuclei_objects(n_objects)
   })
 
-  nuclei_afilt <- reactive({
-    req(nuclei_objects())
+  filtoutByArea <- reactive({
     nobjs <- nuclei_objects()
     names(nobjs[nobjs < input$nsize[1] | nobjs > input$nsize[2]])
   })
 
   # Update nuclei on edges values
-  nuclei_onedges <- reactive({
+  filtoutByEdge <- reactive({
     req(nuclei_seg())
     if (input$rmborder == TRUE) {
       unique(c(
@@ -664,9 +667,9 @@ server <- function(input, output, session) {
   # Reactive to compute nuclei filtered
   nuclei_filtered <- reactive({
     req(nuclei_seg())
-    labstofilter <- c(nuclei_afilt(), nuclei_onedges())
-    if (!is.null(labstofilter)) {
-      rmObjects(nuclei_seg(), labstofilter, reenumerate = F)
+    labs2Rm <- c(filtoutByArea(), filtoutByEdge())
+    if (!is.null(labs2Rm)) {
+      rmObjects(nuclei_seg(), labs2Rm, reenumerate = F)
     } else {
       nuclei_seg()
     }
@@ -688,14 +691,14 @@ server <- function(input, output, session) {
     apply_th(FALSE)
   })
 
-  ## SABGAL Processing
+  ## SABGAL Processing ----
 
   # Create sabgal image when selecting a channel
   sabgal <- reactive({
-    validate(need(valid_img(), "Select an image and channel"))
-    req(input$schan)
+    req(valid_img())
+    validate(need(schan(),"Please select a channel"))
     tryCatch(
-      get_channel(valid_img(), input$schan),
+      get_channel(valid_img(), schan()),
       error = function(e) {
         return(NULL)
       }
@@ -722,18 +725,20 @@ server <- function(input, output, session) {
 
   # Reactive to get sabgal coordinates
   hover_coords <- reactive({
+    # req(input$splot_hover) # Renmove or bgalstats will be invalidated
     coords <- unlist(input$splot_hover[c('x', 'y')])
     if (!is.null(coords)) {
       if (any(coords < 0)) {
-        coords <- NULL
+         NULL
       } else {
-        coords <- round(coords)
+        round(coords)
       }
     }
   })
 
   # Bgal stats
   sabgal_stats <- reactive({
+    req(sabgal(), sabgal_th())
     calc_bgalstats(sabgal(), sabgal_th(), hover_coords())
   })
 
@@ -748,7 +753,7 @@ server <- function(input, output, session) {
 
   # Observer for "Measure" button
   observeEvent(input$run, {
-    req(imgpath(), input$schan)
+    req(imgpath(), schan())
     withProgress(
       {
         # Process image
@@ -767,7 +772,7 @@ server <- function(input, output, session) {
   # Observer for "Run all images" button
   observeEvent(input$run.all, {
     req(mydir())
-    req(input$schan)
+    req(schan())
     # Get filtered files using the reactive value
     if (length(filtered_files()) == 0) {
       showNotification(
@@ -790,10 +795,11 @@ server <- function(input, output, session) {
   ## Outputs ----
 
   # Reactive holding the type of nuclei display
-  displayimg <- reactive({
+  nuclei_disp <- reactive({
     if (apply_th() == TRUE) {
       req(nuclei_filtered())
       return(colorLabels(nuclei_filtered()))}
+    req(img_bitdepth())
     if (all(input$thres.n == c(0, img_bitdepth() - 1))) {
       req(nuclei_bgs())
       return(normalize(
@@ -801,24 +807,30 @@ server <- function(input, output, session) {
         inputRange = c(0, img_bitdepth() - 1)
         ))
     }
-    req(nuclei_th())
+    req(nuclei_th)
     nuclei_th()
   })
+  
   ### Nuclei Plots ----
   output$nplot <- renderPlot({
-    display(displayimg(), method = 'raster')
+    # validate(need(nuclei_disp(),"Select an image"))
+    display(nuclei_disp(), method = 'raster')
   })
 
   ### SABGAL Plot ----
-  output$splot <- renderPlot({
-    validate(need(sabgal(), "Select an image and channel"))
+  
+  sabgal_dis <- reactive({
+    req(img_bitdepth())
     if (all(input$thres.s == c(0, img_bitdepth() - 1))) {
-      img <- normalize(sabgal(), inputRange = c(0, img_bitdepth() - 1))
+      req(sabgal())
+      normalize(sabgal(), inputRange = c(0, img_bitdepth() - 1))
     } else {
       req(sabgal_th())
-      img <- sabgal_th()
+      sabgal_th()
     }
-    display(img, method = 'raster')
+  }) 
+  output$splot <- renderPlot({
+    display(sabgal_dis(), method = 'raster')
   })
 
   ### Nuclei stats  ----
@@ -834,7 +846,7 @@ server <- function(input, output, session) {
 
   ### SABGAL stats ----
   output$stats.s <- renderPrint({
-    req(sabgal_stats())
+    # req(sabgal_stats())
     cat(sabgal_stats())
   })
 
