@@ -1,3 +1,8 @@
+<p align="left">
+  <img src="Assets/Logo.svg" width="300">
+</p>
+
+
 # FAB-gal: Fluorescence Analysis of B-Galactosidase activity
 
 🔥 **NEWS** 🔥: There are still not news
