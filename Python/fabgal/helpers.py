@@ -9,6 +9,8 @@ from pathlib import Path
 import logging
 from bioio.writers import OmeTiffWriter
 
+from .background_subtract import BackgroundSubtracter
+
 #### Log options ####
 
 import logging
@@ -128,15 +130,26 @@ def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out
 
     # Apply subtract background if needed
     if apply_sbg:
+        bg_subtracter = BackgroundSubtracter()
+        
+        # Run the filter
+        # CRITICAL: We set light_background=False for fluorescence/nuclei 
+        # (Bright objects on Dark background).
+        sbg_image = bg_subtracter.run(
+            imgdata, 
+            radius=sbg_rad, 
+            light_background=False,      # Important for nuclei!
+            output_type='difference',    # Returns the signal (nuclei) only
+            nan_policy='omit'            # Safer for pipelines
+        )
         OmeTiffWriter.save(
-            subtract_background(imgdata,
-                                radius=sbg_rad), 
-                    str(out_path),
-                    dim_order="YX")
+            sbg_image,
+            str(out_path),
+            dim_order="YX")
     else:
         OmeTiffWriter.save(imgdata,
-                    str(out_path),
-                    dim_order="YX")
+                           str(out_path),
+                           dim_order="YX")
         
 
 def load_input(input_folder: str) -> List:
