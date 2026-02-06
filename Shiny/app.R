@@ -4,6 +4,18 @@ library(shinyFiles)
 library(bslib)
 require(RBioFormats)
 require(EBImage)
+require(rJava)
+
+# Initialize Java for ImageJ background subtraction
+.jinit(parameters = "-Xmx1g")
+ij_jar_path <- 'ij/ij.jar'
+if (file.exists(ij_jar_path)) {
+  .jaddClassPath(ij_jar_path)
+} else {
+  warning("ij.jar not found at:", ij_jar_path, "\nBackground subtraction may not work.")
+}
+
+# Source functions
 source("Functions.R")
 
 # Define UI ----
@@ -390,7 +402,7 @@ server <- function(input, output, session) {
   ## Image loading ----
 
   ### Read image ----
-  img <- reactive({
+  ebimg <- reactive({
     req(imgpath(), mydir())
     # Read image
     tryCatch(
@@ -409,24 +421,24 @@ server <- function(input, output, session) {
 
   ### Check valid image ----
   valid_img <- reactive({
-    req(img())
-    if (length(dim(img())) > 3) {
+    req(ebimg())
+    if (length(dim(ebimg())) > 3) {
       showNotification(
         "Image with more than 3 dimesions. Only images with XYC dimensions are supported",
         type = 'error'
       )
       return(NULL)
     }
-    if (!grepl('^XYC', coreMetadata(img())$dimensionOrder)) {
+    if (!grepl('^XYC', coreMetadata(ebimg())$dimensionOrder)) {
       showNotification(
         paste0(
-          "Image dimesion order should be XYC. Your image is: coreMetadata(img)$dimensionOrder"
+          "Image dimesion order should be XYC. Your image is: coreMetadata(ebimg)$dimensionOrder"
         ),
         type = 'error'
       )
       return(NULL)
     }
-    img()
+    ebimg()
   })
 
   ### Number of channels ----
@@ -468,7 +480,7 @@ server <- function(input, output, session) {
           choices = 1:nc(),
           selected = schan
         )
-        updatechan <- reactiveVal(FALSE)
+        updatechan(FALSE)
       }
     }
   )
@@ -563,8 +575,14 @@ server <- function(input, output, session) {
 
   # Reactive to store nuclei background subtracted
   nuclei_bgs <- reactive({
+    req(nuclei_b())
     if (input$sback == TRUE) {
-      subtract_background(nuclei_b(), input$radius)
+      tryCatch({
+        subtract_background(nuclei_b(), input$radius)
+      }, error = function(e) {
+        showNotification(paste("Error in background subtraction:", e$message), type = "error")
+        nuclei_b()
+      })
     } else {
       nuclei_b()
     }
@@ -572,9 +590,9 @@ server <- function(input, output, session) {
 
   # Reactive to store nuclei thresholded
   nuclei_th <- reactive({
-    img <- nuclei_bgs()
-    img <- img >= input$thres.n[1] & img <= input$thres.n[2]
-    fillHull(img)
+    imgobj <- nuclei_bgs()
+    imgobj <- imgobj >= input$thres.n[1] & imgobj <= input$thres.n[2]
+    fillHull(imgobj)
   })
 
   # ObserveEvent for otsu
@@ -771,21 +789,24 @@ server <- function(input, output, session) {
 
   ## Outputs ----
 
+  # Reactive holding the type of nuclei display
+  displayimg <- reactive({
+    if (apply_th() == TRUE) {
+      req(nuclei_filtered())
+      return(colorLabels(nuclei_filtered()))}
+    if (all(input$thres.n == c(0, img_bitdepth() - 1))) {
+      req(nuclei_bgs())
+      return(normalize(
+        nuclei_bgs(), 
+        inputRange = c(0, img_bitdepth() - 1)
+        ))
+    }
+    req(nuclei_th())
+    nuclei_th()
+  })
   ### Nuclei Plots ----
   output$nplot <- renderPlot({
-    req(nuclei())
-    if (apply_th() == TRUE) {
-      img <- colorLabels(nuclei_filtered())
-    } else {
-      if (all(input$thres.n == c(0, img_bitdepth() - 1))) {
-        req(nuclei())
-        img <- normalize(nuclei(), inputRange = c(0, img_bitdepth() - 1))
-      } else {
-        img <- nuclei_th()
-      }
-    }
-    req(img)
-    display(img, method = 'raster')
+    display(displayimg(), method = 'raster')
   })
 
   ### SABGAL Plot ----

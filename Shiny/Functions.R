@@ -66,48 +66,84 @@
     }
     }
 
-# Subtract background----
-  subtract_background <- function(img_obj, radius){
-    kernel <- ball_kernel(radius, normalize = TRUE)
-    background <- filter2(img_obj, kernel)
-    img_obj <- img_obj - background
-    img_obj[img_obj < 0] <- 0
-    return(img_obj)
-  }
-  
-  # Function to create a 2D ball kernel
-  # (matching scikit-image implementation)
-  ball_kernel <- function(radius, normalize = TRUE) {
-    # Create coordinate matrices - using ceiling of radius like Python version
-    size <- 2 * ceiling(radius) + 1
-    center <- ceiling(radius) + 1
+# Subtract background using ImageJ rolling ball algorithm----
+  subtract_background <- function(ebimg, radius = 50.0) {
     
-    # Create meshgrid coordinates
-    coords <- expand.grid(
-      x = seq(-ceiling(radius), ceiling(radius)),
-      y = seq(-ceiling(radius), ceiling(radius))
-    )
+    # Ensure radius is double for Java (not integer)
+    radius <- as.double(radius)
     
-    # Calculate sum of squares and distance
-    sum_of_squares <- coords$x^2 + coords$y^2
-    distance_from_center <- sqrt(sum_of_squares)
-    
-    # Create kernel: z = sqrt(r^2 - (x^2 + y^2)) where inside sphere
-    kernel_values <- sqrt(pmax(radius^2 - sum_of_squares, 0))
-    
-    # Set values outside radius to 0 (more practical than Inf for our use case)
-    kernel_values[distance_from_center > radius] <- 0
-    
-    # Convert to matrix
-    kernel <- matrix(kernel_values, nrow = size, ncol = size, byrow = TRUE)
-    
-    # Normalize kernel if requested
-    if (normalize) {
-      kernel <- kernel / sum(kernel)
+    # ---- VALIDATE INPUT ----
+    if (!inherits(ebimg, c("Image", "array", "matrix"))) {
+      stop("Input must be an EBImage Image object or numeric array/matrix")
     }
     
-    return(kernel)
+    # Extract data if EBImage object
+    if (inherits(ebimg, "Image")) {
+      mat <- EBImage::imageData(ebimg)
+    } else {
+      mat <- ebimg
+    }
+    
+    # Ensure 2D
+    if (!is.matrix(mat) && !is.array(mat)) {
+      stop("Input must be 2D (matrix or 2D array)")
+    }
+    if (length(dim(mat)) != 2) {
+      stop("Input must be 2D")
+    }
+    
+    # Get dimensions BEFORE any type conversion
+    h <- nrow(mat)
+    w <- ncol(mat)
+    
+    # ---- PREPARE DATA ----
+    # Ensure 0-255 range for ByteProcessor
+    if (max(mat) <= 1.0) {
+      # Normalize from [0, 1] to [0, 255]
+      mat <- mat * 255
+    }
+    # Convert to integer while preserving matrix shape
+    mat <- matrix(as.integer(mat), nrow = h, ncol = w)
+    
+    # ---- CREATE JAVA OBJECTS (exactly as in test_imagej_background.R) ----
+    byte_array <- as.raw(as.vector(mat))
+    fp <- .jnew("ij.process.ByteProcessor", w, h, byte_array)
+    
+    # ---- RUN SUBTRACT BACKGROUND ----
+    bs <- .jnew("ij.plugin.filter.BackgroundSubtracter")
+    
+    createBackground <- FALSE
+    lightBackground <- FALSE
+    useParaboloid <- FALSE
+    doPresmooth <- TRUE
+    correctCorners <- TRUE
+    
+    bs$rollingBallBackground(fp, radius, createBackground,
+                             lightBackground, useParaboloid,
+                             doPresmooth, correctCorners)
+    
+    # ---- EXTRACT RESULT ----
+    pixels <- fp$getPixels()
+    pixels_num <- as.numeric(pixels)
+    
+    # Reconstruct: column-major (byrow=FALSE)
+    out_mat <- matrix(pixels_num, nrow = h, ncol = w, byrow = FALSE)
+    
+    # ---- RETURN AS EBIMAGE ----
+    result <- EBImage::Image(out_mat, colormode = "Grayscale")
+    return(result)
   }
+
+# Helper: Check if Java initialized ----
+  .jniInitialized <- function() {
+    tryCatch({
+      .jcall("java/lang/System", "S", "getProperty", "java.version")
+      TRUE
+    }, error = function(e) {
+      FALSE
+    })
+  }
+  
   
 
 
