@@ -35,7 +35,7 @@ def run_fabgal(cfg: FABGalConfig):
     Main function to run Fab-Gal software
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-Gal.
+        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
 
     """
     ####### Load images #######

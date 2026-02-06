@@ -5,7 +5,7 @@ from dataclasses import dataclass
 @dataclass
 class FABGalConfig:
     """
-    Dataclass for storing all parameters required for running FAB-Gal
+    Dataclass for storing all parameters required for running FAB-gal
     
     ## Variables:
 

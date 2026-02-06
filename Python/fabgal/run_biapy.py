@@ -21,7 +21,7 @@ def run_biapy(cfg: FABGalConfig):
     Run BiaPy analysis to count nuclei with stated parameters, processes output, and generates final .
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-Gal.
+        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
     """
     # Results dir for BiaPy
     results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"

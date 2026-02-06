@@ -19,7 +19,7 @@ def calculate_CTF(cfg: FABGalConfig):
     Process B-Gal calculations and BiaPy nuclei count to get the corrected total fluorescence (CTF) from each individual image. If an `image to individual`file is entered, also returns CTF calculations per individual, after adding the measurements of all image replicates from each individual.
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-Gal.
+        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
     """
 
     # Start message

@@ -1,14 +1,14 @@
-# FAB-Gal: Fluorescence Analysis of B-Galactosidase activity
+# FAB-gal: Fluorescence Analysis of B-Galactosidase activity
 
 🔥 **NEWS** 🔥: There are still not news
 
-FAB-Gal is a method that joins the simplicity, fast execution, low cost and versatility of the classical SA-B-Gal assay with the quantification and sensitivity of fluorescence assays. It exploits the far-red fluorescence of X-Gal product ([Levitsky et al., 2013](https://www.nature.com/articles/srep02937)) coupled with a count of cell nuclei powered by [BiaPy](https://github.com/BiaPyX/BiaPy) to quantify in a semiautomatic and unbiased manner SA-B-Gal activity. This github repository is dedicated to the image analysis part od the method. To read the full method go to **url_paper**
+FAB-gal is a method that joins the simplicity, fast execution, low cost and versatility of the classical SA-B-Gal assay with the quantification and sensitivity of fluorescence assays. It exploits the far-red fluorescence of X-Gal product ([Levitsky et al., 2013](https://www.nature.com/articles/srep02937)) coupled with a count of cell nuclei powered by [BiaPy](https://github.com/BiaPyX/BiaPy) to quantify in a semiautomatic and unbiased manner SA-B-Gal activity. This github repository is dedicated to the image analysis part od the method. To read the full method go to **url_paper**
 
 ⚠️ **GENERAL NOTES** ⚠️:\
- In order to obtain comparable results input images of FAB-Gal must be taken with the same objective and using the same laser intensity and time exposure for the far-red channel\
-FAB-Gal only accepts **TIFF** images as input, if your images have a different format please convert them to TIFF using softwares such as ImageJ.
+ In order to obtain comparable results input images of FAB-gal must be taken with the same objective and using the same laser intensity and time exposure for the far-red channel\
+FAB-gal only accepts **TIFF** images as input, if your images have a different format please convert them to TIFF using softwares such as ImageJ.
 
-## FAB-Gal desktop application for Windows, MacOS
+## FAB-gal desktop application for Windows, MacOS
 
 We have developed a desktop application that enables a user-friendly usage of our analysis method designed for a reduce number of images. If you want to use our methos in a large set of images (more than 50) you may consider to use the Jupyter notebook that we have designed fo this purpose (see below).
 
@@ -26,7 +26,7 @@ Explanaition of the method Jandro
 
 #### Start and file selection
 
-First of all download the FAB-Gal desktop application (see above).
+First of all download the FAB-gal desktop application (see above).
 
 Once you have opened the app first of all select the directory were you store the images that you want to analyze, you can filter the images you want by file name.
 
@@ -74,13 +74,13 @@ The results file contains the folowing columns:
 
 ⚠️ **NOTE** ⚠️: the columns with physical size information (Area, Area units, CTF/area(unit)) are optional, to obtain them you have to click on **"button_name"**, thus the app will try to extract them form the image meatadata if it fails you can always introduce them manually. Otherwise, these columns will appear as NA.
 
-## 🧑‍💻 FAB-Gal Jupyter notebook for high-throughput applications
+## 🧑‍💻 FAB-gal Jupyter notebook for high-throughput applications
 
-For those users willing to apply FAB-Gal to a large number of images or for users that have computanional skills we provide a Jupyter notebook for a faster and more customable execution of FAB-Gal.
+For those users willing to apply FAB-gal to a large number of images or for users that have computanional skills we provide a Jupyter notebook for a faster and more customable execution of FAB-gal.
 
 ### 🧩 How does it work?
 
-FAB-Gal pipeline reads the TIFF images and calculates the raw integrated density, the positive and total pixels and the total area of the far-red channel after applying a threshold defined by the user using a negative control (unstained cells). Then, if working with culture cells, it applies a subtract background transformation to the nuclei channel (set by default but optional) and uses it as input for BiaPy, a deep learning algorithm that segmentates nuclei. Finally, these data are used to calculate CTF per nuclei (culture cells) or CTF per area (tissue sections) of each image. However, as mentioned before when working with technical replicates (e.g. several phtos of the same well) we recommend to compute CTF per nuclei at the biological replicate level (e.g each well) to mitigate the effect of possible outlier values proceeding from images with low numbers of cells.
+FAB-gal pipeline reads the TIFF images and calculates the raw integrated density, the positive and total pixels and the total area of the far-red channel after applying a threshold defined by the user using a negative control (unstained cells). Then, if working with culture cells, it applies a subtract background transformation to the nuclei channel (set by default but optional) and uses it as input for BiaPy, a deep learning algorithm that segmentates nuclei. Finally, these data are used to calculate CTF per nuclei (culture cells) or CTF per area (tissue sections) of each image. However, as mentioned before when working with technical replicates (e.g. several phtos of the same well) we recommend to compute CTF per nuclei at the biological replicate level (e.g each well) to mitigate the effect of possible outlier values proceeding from images with low numbers of cells.
 
 $$
 \begin{aligned}
@@ -130,7 +130,7 @@ Once you have create the environment enter in the jupyter notebook **FABGal.ipny
 
 ## Citation
 
-Please note that FAB-Gal is based on a publication. If you use it successfully for your research please be so kind to cite our work:
+Please note that FAB-gal is based on a publication. If you use it successfully for your research please be so kind to cite our work:
 
 
 
