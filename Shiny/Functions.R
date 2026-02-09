@@ -1,12 +1,12 @@
 
 # Read image ----
   myreadimg <- function(imgpath){
-    img <- read.image(imgpath,
+    img_obj <- read.image(imgpath,
                       proprietary.metadata = F,
                       read.metadata = T,
                       normalize = F)
-    colorMode(img) <- 'Grayscale'
-    img
+    colorMode(img_obj) <- 'Grayscale'
+    img_obj
   }
 
 # Safely extract a channel from an image object----
@@ -37,9 +37,9 @@
   }
 
 # Extract bit depth from image metadata ----
-  get_bitdepth <- function(img){
+  get_bitdepth <- function(img_obj){
     tryCatch({
-      2^coreMetadata(img)$bitsPerPixel 
+      2^coreMetadata(img_obj)$bitsPerPixel 
     },
     error = function(e) {
       print("image bit depth not available")
@@ -48,9 +48,9 @@
   }
   
 # Get pixel resolution----
-  get_pxarea <- function(img){
-    pxsize <- c(globalMetadata(img)$XResolution, globalMetadata(img)$YResolution)
-    oriunit <- tolower(globalMetadata(img)$ResolutionUnit)
+  get_pxarea <- function(img_obj){
+    pxsize <- c(globalMetadata(img_obj)$XResolution, globalMetadata(img_obj)$YResolution)
+    oriunit <- tolower(globalMetadata(img_obj)$ResolutionUnit)
     resunit <- NA
     if (oriunit %in% c("cm","centimeter")){
       pxsize <- pxsize / 10000
@@ -66,58 +66,94 @@
     }
     }
 
-# Subtract background----
-  subtract_background <- function(img, radius){
-    kernel <- ball_kernel(radius, normalize = TRUE)
-    background <- filter2(img, kernel)
-    img <- img - background
-    img[img < 0] <- 0
-    return(img)
-  }
-  
-  # Function to create a 2D ball kernel
-  # (matching scikit-image implementation)
-  ball_kernel <- function(radius, normalize = TRUE) {
-    # Create coordinate matrices - using ceiling of radius like Python version
-    size <- 2 * ceiling(radius) + 1
-    center <- ceiling(radius) + 1
+# Subtract background using ImageJ rolling ball algorithm----
+  subtract_background <- function(ebimg, radius = 50.0) {
     
-    # Create meshgrid coordinates
-    coords <- expand.grid(
-      x = seq(-ceiling(radius), ceiling(radius)),
-      y = seq(-ceiling(radius), ceiling(radius))
-    )
+    # Ensure radius is double for Java (not integer)
+    radius <- as.double(radius)
     
-    # Calculate sum of squares and distance
-    sum_of_squares <- coords$x^2 + coords$y^2
-    distance_from_center <- sqrt(sum_of_squares)
-    
-    # Create kernel: z = sqrt(r^2 - (x^2 + y^2)) where inside sphere
-    kernel_values <- sqrt(pmax(radius^2 - sum_of_squares, 0))
-    
-    # Set values outside radius to 0 (more practical than Inf for our use case)
-    kernel_values[distance_from_center > radius] <- 0
-    
-    # Convert to matrix
-    kernel <- matrix(kernel_values, nrow = size, ncol = size, byrow = TRUE)
-    
-    # Normalize kernel if requested
-    if (normalize) {
-      kernel <- kernel / sum(kernel)
+    # ---- VALIDATE INPUT ----
+    if (!inherits(ebimg, c("Image", "array", "matrix"))) {
+      stop("Input must be an EBImage Image object or numeric array/matrix")
     }
     
-    return(kernel)
+    # Extract data if EBImage object
+    if (inherits(ebimg, "Image")) {
+      mat <- EBImage::imageData(ebimg)
+    } else {
+      mat <- ebimg
+    }
+    
+    # Ensure 2D
+    if (!is.matrix(mat) && !is.array(mat)) {
+      stop("Input must be 2D (matrix or 2D array)")
+    }
+    if (length(dim(mat)) != 2) {
+      stop("Input must be 2D")
+    }
+    
+    # Get dimensions BEFORE any type conversion
+    h <- nrow(mat)
+    w <- ncol(mat)
+    
+    # ---- PREPARE DATA ----
+    # Ensure 0-255 range for ByteProcessor
+    if (max(mat) <= 1.0) {
+      # Normalize from [0, 1] to [0, 255]
+      mat <- mat * 255
+    }
+    # Convert to integer while preserving matrix shape
+    mat <- matrix(as.integer(mat), nrow = h, ncol = w)
+    
+    # ---- CREATE JAVA OBJECTS (exactly as in test_imagej_background.R) ----
+    byte_array <- as.raw(as.vector(mat))
+    fp <- .jnew("ij.process.ByteProcessor", w, h, byte_array)
+    
+    # ---- RUN SUBTRACT BACKGROUND ----
+    bs <- .jnew("ij.plugin.filter.BackgroundSubtracter")
+    
+    createBackground <- FALSE
+    lightBackground <- FALSE
+    useParaboloid <- FALSE
+    doPresmooth <- TRUE
+    correctCorners <- TRUE
+    
+    bs$rollingBallBackground(fp, radius, createBackground,
+                             lightBackground, useParaboloid,
+                             doPresmooth, correctCorners)
+    
+    # ---- EXTRACT RESULT ----
+    pixels <- fp$getPixels()
+    pixels_num <- as.numeric(pixels)
+    
+    # Reconstruct: column-major (byrow=FALSE)
+    out_mat <- matrix(pixels_num, nrow = h, ncol = w, byrow = FALSE)
+    
+    # ---- RETURN AS EBIMAGE ----
+    result <- EBImage::Image(out_mat, colormode = "Grayscale")
+    return(result)
   }
+
+# Helper: Check if Java initialized ----
+  .jniInitialized <- function() {
+    tryCatch({
+      .jcall("java/lang/System", "S", "getProperty", "java.version")
+      TRUE
+    }, error = function(e) {
+      FALSE
+    })
+  }
+  
   
 
 
 # Function to report pixel intensity ----
-  calc_bgalstats <- function(img,imgth,coords) {
+  calc_bgalstats <- function(img_obj,imgth,coords) {
     perA <- sum(imgth == 1) * 100 / length(imgth)
-    mfi <- mean(img)
+    mfi <- mean(img_obj)
     if (!is.null(coords)){
       cint <- tryCatch({
-        img[coords[1],coords[2]]
+        img_obj[coords[1],coords[2]]
       }, error= function(e) {return(NA)}
       )
     } else {cint <- NA}
@@ -145,37 +181,51 @@
   }
   
 # Function to process a single image
-process_single_image <- function(img_path, appsets) {
+process_single_image <- function(img_path, appsets,outdir=NULL) {
   errors <- NULL
   # Load image
-  img <- tryCatch(
+  img_obj <- tryCatch(
     {myreadimg(img_path)},
     error = function(e) {
       msg = "Error reading file"
       showNotification(paste(msg,":",basename(img_path)),type='error')
       errors <<- c(errors,msg)
+      return(NULL)
     }
   )
   # stop if reading error
-  if (is.null(img)){
-    return(c(as.list(rep(NA,10)),as.list(errors)))
+  if (is.null(img_obj)){
+    return(c(as.list(rep(NA,9)),as.list(errors)))
   }
   # Process nuclei
   nres <- tryCatch({
     if (appsets$nchan == "") {
-      NA }
-    else {
-      process_nuclei(get_channel(img, appsets$nchan), appsets)
-      }
+      list("Count"=NA,"Maskn"=NULL)
+    } else {
+      process_nuclei(get_channel(img_obj, appsets$nchan), appsets)
+    }
     }, error = function(e) {
-      msg <- paste("Error processing nuclei")
+      msg <- paste("Error processing nuclei",e)
       showNotification(paste(msg, ":",basename(img_path)),type='error')
       errors <<- c(errors, msg)
-      return(NA)
+      list("Count"=NA,"Maskn"=NULL)
     })
+  # Save nuclei mask if requested and present
+  outfname <- file.path(outdir,gsub("\\..*$",".png",basename(img_path)))
+  if (!is.null(nres$Maskn)){
+    tryCatch({
+      if (file.exists(outfname)){stop("File already exists")}
+      writeImage(nres$Maskn,outfname)
+      }, error = function(e){
+      msg <- paste("Error saving nuclei mask. File already exits?")
+      showNotification(paste(msg, ":",basename(img_path)),type='error')
+      errors <<- c(errors, msg)
+    })
+  }
+
   # Process sabgal
   sres <- tryCatch({
-    process_sabgal(get_channel(img, appsets$schan), appsets)
+    process_sabgal(get_channel(img_obj, appsets$schan), appsets)
     }, error = function(e) {
       msg <- paste("Error processing sabgal", e$message)
       showNotification(paste(msg, ":",basename(img_path)),type='error')
@@ -189,66 +239,70 @@ process_single_image <- function(img_path, appsets) {
     "Success"
   }
   res <- c(sres,
-           nres,
-           sres[[4]]/nres,
+           nres$Count,
+           sres[[4]]/nres$Count,
            as.list(status))
-  print(res)
   return(res)
 }
   
   
   # Processing nuclei
-  process_nuclei <- function(img, appsets){
+  process_nuclei <- function(img_obj, appsets){
     # Run Thresholding
-    img <- run_thresh(img, appsets)
+    img_obj <- run_thresh(img_obj, appsets)
     # Check if any objects detected
-    if (max(img) == 0) {return(0)}
+    if (max(img_obj) == 0) {return(list("Count"=0,"Maskn"=NULL))}
     # Apply segmentation
-    # img <- bwlabel(img)
-    img <- watershed(distmap(img))
+    # img_obj <- bwlabel(img_obj)
+    img_obj <- watershed(distmap(img_obj))
     # Remove objects on edges if activated
     if (appsets$rmborder == TRUE) {
       onedge <- unique(c(
-        img[1,],
-        img[nrow(img),],
-        img[,1],
-        img[,ncol(img)])
+        img_obj[1,],
+        img_obj[nrow(img_obj),],
+        img_obj[,1],
+        img_obj[,ncol(img_obj)])
       )
-      img <- rmObjects(img,onedge , reenumerate = F)
+      img_obj <- rmObjects(img_obj,onedge , reenumerate = F)
     }
     # Compute features and filter
-    # feat <- computeFeatures.shape(img)[,'s.area']
-    feat <- c(table(c(img),exclude = 0)) # Way faster
+    # feat <- computeFeatures.shape(img_obj)[,'s.area']
+    feat <- c(table(c(img_obj),exclude = 0)) # Way faster
     # Filter by area using appsets$nsize
-    feat <- feat[feat >= appsets$nsize[1] & feat <= appsets$nsize[2]]
-    return(length(feat))
+    feat.f <- feat[feat >= appsets$nsize[1] & feat <= appsets$nsize[2]]
+    # Return nuclei mask if enabled
+    maskn <- if (appsets$saven == TRUE){
+      rmlabs <- setdiff(names(feat),names(feat.f))
+      colorLabels(rmObjects(img_obj,rmlabs))
+    } else {NULL}
+    return(list("Count"=length(feat.f),"Maskn"=maskn))
   }
 
   # Run thresholding for nuclei
-  run_thresh <- function(img, input){
+  run_thresh <- function(img_obj, input){
     # Gaussian blur
     if (input$sigma > 0){
-      img <- gblur(img, input$sigma)
+      img_obj <- gblur(img_obj, input$sigma)
     }
     # Background correction
     if (input$sback == TRUE){
-      img <- subtract_background(img, input$radius)
+      img_obj <- subtract_background(img_obj, input$radius)
     }
     # Apply Threshold
-    img <- img >= input$thres.n[1] & img <= input$thres.n[2]
+    img_obj <- img_obj >= input$thres.n[1] & img_obj <= input$thres.n[2]
     # Fill holes
-    result <- fillHull(img)
+    result <- fillHull(img_obj)
     return(result)
   }
 
 
 # Process bgal
-  process_sabgal <- function(img, appsets){
-    img_th <- img >= appsets$thres.s[1] & img <= appsets$thres.s[2]
-    NimagePx <- length(img)
+  process_sabgal <- function(img_obj, appsets){
+    img_th <- img_obj >= appsets$thres.s[1] & img_obj <= appsets$thres.s[2]
+    NimagePx <- length(img_obj)
     Area <- NimagePx*as.numeric(appsets$pxarea)
     NpxPos <- sum(img_th == 1) 
-    RawIntDen <- sum(img[img_th == 1])
+    RawIntDen <- sum(img_obj[img_th == 1])
     CTF <- RawIntDen - (as.numeric(appsets$bmfi)*NpxPos)
     CTFpx <- CTF / NpxPos
     CTFpa <- CTF / Area
@@ -265,13 +319,13 @@ process_single_image <- function(img_path, appsets) {
   
 
 # Function to process all images in batch
-  process_all_images <- function(image_files, input) {
+  process_all_images <- function(image_files, input, outdir) {
     n_files <- length(image_files)
     resdf <- empty_res()
     withProgress(message = "Processing images", value = 0, {
       # Process each image
       for (i in seq_along(image_files)) {
-        res <- process_single_image(image_files[i], input)
+        res <- process_single_image(image_files[i], input, outdir)
         resdf[i,] <- c(list(basename(image_files[i])),res)
         incProgress(1/n_files, detail = paste("Doing image", i, "of", n_files))
       }
