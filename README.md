@@ -3,7 +3,7 @@
 </p>
 
 
-# FAB-gal: Fluorescence Analysis of B-Galactosidase activity
+# FAB-gal: Fluorescence Analysis of B-galactosidase activity
 
 🔥 **NEWS** 🔥: There are still not news
 
