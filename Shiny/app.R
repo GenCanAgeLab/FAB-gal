@@ -27,10 +27,14 @@ ui <- fluidPage(
       style = "text-align: center;",
       column(
         width = 3,
-        img(
-          src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
-          align = "rigth",
-          height = 100
+        a(
+          img(
+            src = "Logo.png",
+            align = "rigth",
+            height = 80
+          ),
+          href="https://github.com/antotartier/FAB-gal",
+          target="_blank"
         )
       ),
       column(
@@ -39,19 +43,23 @@ ui <- fluidPage(
         h4(
           a(
             "Genomes, Cancer and Aging (GenCanAge) Group",
-            href = "https://portalinvestigacion.uniovi.es/grupos/77669/detalle?lang=en",
+            href = "https://github.com/GenCanAgeLab",
             target = "_blank"
           )
         )
       ),
       column(
         width = 3,
-        img(
-          src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+        a(
+          img(
+          src = "Logo_gencanage.jpeg",
           align = "rigth",
-          height = 100
+          height = 80
+          ),
+          href="https://github.com/GenCanAgeLab",
+          target="_blank"
         )
-      )
+        )
     )
   ),
   ## SidebarPanel ----
@@ -128,12 +136,7 @@ ui <- fluidPage(
         max = 1001,
         value = 51,
         step = 1
-      )
-    ),
-    ### Nuclei segmentation wellpanel ----
-    wellPanel(
-      style = "background: #eddcd3",
-      align = "center",
+      ),
       actionButton('ApplyTh', "Count and filter", class = "btn-primary"),
       checkboxInput('rmborder', "Remove on edges", TRUE),
       sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
@@ -281,17 +284,55 @@ ui <- fluidPage(
       br()
     )
   ),
+  ## Footer ----
   fluidRow(
     style = "text-align: center;",
     p(
-      "Developed by Alejandro P. Ugalde, Antonio Garcia-Bernardo Tartiere and David Roiz del Valle"
+      "Developed by Antonio Garcia-Bernardo Tartiere, Alejandro P. Ugalde and David Roiz del Valle"
     ),
     a(
       "github.com/GenCanAgeLab/SAbGal_quant",
-      href = "https://github.com/GenCanAgeLab/SAbGal_quant",
+      href = "https://github.com/antotartier/FAB-gal",
       target = "_blank"
     )
   ),
+  br(),
+  fluidRow(
+    style = "text-align: center;",
+    a(
+      img(
+      src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+      align = "rigth",
+      height = 80
+      ),
+      href="https://www.uniovi.es/"
+    ),
+    a(
+      img(
+        src = "https://ispa-finba.es/wp-content/uploads/2019/12/ISPA_marca_principal_color-150x150.png",
+        align = "rigth",
+        height = 80
+      ),
+      href="https://ispa-finba.es/"
+    ),
+    a(
+      img(
+        src = "Logo_iuopa.jpg",
+        align = "rigth",
+        height = 80
+      ),
+      href="https://www.unioviedo.es/IUOPA/"
+    ),
+    a(
+      img(
+        src = "  https://www.aei.gob.es/sites/default/files/inline-images/miciu-cofinanciadoUE-aei.png",
+        align = "rigth",
+        height = 80
+      ),
+      href="https://www.aei.gob.es/"
+    )
+  ),
+  
   ## CSS Styling ----
   tags$head(
     tags$style(
@@ -789,7 +830,7 @@ server <- function(input, output, session) {
 
   # Observer for "Click Here To Learn More"
   observeEvent(input$help, {
-    browseURL("https://github.com/antotartier/FAB-Gal/wiki/Desktop-application")
+    browseURL("https://github.com/antotartier/FAB-gal/wiki")
   })
 
   ## Outputs ----
