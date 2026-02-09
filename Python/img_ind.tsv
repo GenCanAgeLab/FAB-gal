@@ -1,10 +1,8 @@
 File	Individual
-20251114_GM0038_bgal_sensitivity2-02-Scene-003-P4-B03.tiff	B03
-20251114_GM0038_bgal_sensitivity2-02-Scene-004-P3-B03.tiff	B03
-20251114_GM0038_bgal_sensitivity2-02-Scene-005-P2-B03.tiff	B03
-20251114_GM0038_bgal_sensitivity2-02-Scene-008-P3-B04.tiff	B04
-20251114_GM0038_bgal_sensitivity2-02-Scene-009-P4-B04.tiff	B04
-20251114_GM0038_bgal_sensitivity2-02-Scene-010-P5-B04.tiff	B04
-20251114_GM0038_bgal_sensitivity2-02-Scene-012-P1-B05.tiff	B05
-20251114_GM0038_bgal_sensitivity2-02-Scene-013-P2-B05.tiff	B05
-20251114_GM0038_bgal_sensitivity2-02-Scene-014-P3-B05.tiff	B05
+Background.tif  Background
+Proliferative_cells.tif  Proliferative
+Proliferaterative_cells_2.tif  Proliferative
+Senescent_cells.tif  Senescent
+Senescent_cells_2.tif  Senescent
+Unstained_cells.tif  Unstained
+Unstained_cells_2.tif  Unstained
