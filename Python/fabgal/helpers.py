@@ -3,13 +3,11 @@ from typing import List
 from numpy.typing import NDArray
 from skimage.restoration import rolling_ball
 from skimage.transform import rescale,resize
-from skimage.util import img_as_ubyte, img_as_float
+
 from scipy.ndimage import uniform_filter
 from pathlib import Path
 import logging
 from bioio.writers import OmeTiffWriter
-
-from .background_subtract import BackgroundSubtracter
 
 #### Log options ####
 
@@ -86,37 +84,72 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
     return [NpxPos, NpxTot, AreaPos, AreaTot, pxarea, RawIntDen]
 
 
-def subtract_background(img, radius : int, scale : int = 8) -> NDArray[np.uint8]:
+def subtract_background(image, radius : int) -> NDArray[np.generic]:
     """
-    Subtracts the background signal of an input image using the rolling ball algorithm.
+    Subtracts the background signal of an input image using the rolling-ball
+    algorithm with a previous downscaling to improve speed.
 
-    This function smooths the image using an uniform filter, estimates background signal via a downscaled 
-    rolling ball, and returns the background-subtracted image as a numpy array of uint8 format in order to be saved.
+    This function applies mild uniform smoothing to the input image, estimates
+    the background using a downscaled rolling-ball algorithm, and returns the background-subtracted image.
 
-    Args:
-        img (np.ndarray): The input image array (pixel data).
-        radius (int): Radius to be applied in the rolling_ball algorithm.
-        scale (int, optional): Factor by which the image is downscaled to speed up 
-            background estimation. Defaults to 8.
+    This function follows the downscaling strategy proposed by scikit-image developers (see PR #7954 by jouyun):
+    https://github.com/scikit-image/scikit-image/pull/7954
 
-    Returns:
-        np.ndarray: The background-subtracted image as ubyte (uint8).
+    The output image has the same dtype as the input image.
 
+    Parameters
+    ----------
+        image : np.ndarray
+            Input image array.
+        radius : int
+            Radius of the rolling ball, in pixels.
+
+    Returns
+    -------
+        np.ndarray
+            Background-subtracted image with the same dtype as the input.
     """
-    img = uniform_filter(img, size=3)
-    img = img_as_float(img)
+    # Pre-smoothing
+    image = uniform_filter(image, size=3)
 
-    #Downscale
-    bg = rescale(img,
-                 1/scale,
-                 order=1,
-                 preserve_range=True)
-    bg = rolling_ball(bg, radius=radius, nansafe=False)
-    bg = resize(bg,
-                img.shape,
-                order=1,
-                preserve_range=True)
-    return img_as_ubyte(img-bg)
+    # Convert image info
+    img = np.asarray(image)
+    img = img.astype(np.float64, copy = False)
+
+    # Calculate downscale factor
+    down_scale_factor = max(int(round(0.5 * (np.sqrt(radius) - 1))), 1)
+
+    # Downscale
+    img_small = rescale(
+        img,
+        1 / down_scale_factor,
+        order=1,
+        preserve_range=True,
+        anti_aliasing=False,
+    )
+
+    # Apply rolling ball with scaled radius
+    bg_small = rolling_ball(
+        img_small,
+        radius=radius / down_scale_factor,
+        nansafe=False
+    )
+
+    # Upscale
+    bg = resize(
+        bg_small,
+        img.shape,
+        order=1,
+        preserve_range=True,
+        anti_aliasing=False,
+    )
+
+    bg = np.minimum(img, bg)
+
+    # Subtract background
+    result = img - bg
+
+    return result.astype(image.dtype, copy=False)
 
 def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out_path: str):
     """
@@ -130,20 +163,8 @@ def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out
 
     # Apply subtract background if needed
     if apply_sbg:
-        bg_subtracter = BackgroundSubtracter()
-        
-        # Run the filter
-        # CRITICAL: We set light_background=False for fluorescence/nuclei 
-        # (Bright objects on Dark background).
-        sbg_image = bg_subtracter.run(
-            imgdata, 
-            radius=sbg_rad, 
-            light_background=False,      # Important for nuclei!
-            output_type='difference',    # Returns the signal (nuclei) only
-            nan_policy='omit'            # Safer for pipelines
-        )
         OmeTiffWriter.save(
-            sbg_image,
+            subtract_background(imgdata,radius=sbg_rad),
             str(out_path),
             dim_order="YX")
     else:
