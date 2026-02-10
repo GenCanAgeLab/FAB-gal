@@ -162,7 +162,7 @@ ui <- fluidPage(
         column(
           width = 7,
           align = 'center',
-          textInput('bmfi', NULL, "0", placeholder = "Ej. 23")
+          textInput('bmfi', NULL, "", placeholder = "Ej. 23")
         ),
         column(
           width = 5,
@@ -415,7 +415,7 @@ server <- function(input, output, session) {
     imgpath(NULL)
     updateSliderInput(session, 'thres.n', value = c(0, 255), min = 0, max = 255)
     updateSliderInput(session, 'thres.s', value = c(0, 255), min = 0, max = 255)
-    updateTextInput(session, 'bmfi', value = "0")
+    updateTextInput(session, 'bmfi', value = "")
     updateTextInput(session, 'pxarea', value = "")
     outdir(mydir()) # Set output dir to current dir
   })
@@ -568,7 +568,7 @@ server <- function(input, output, session) {
 
   ### Background fluorescence ----
 
-  bmfi <- reactiveVal(0)
+  bmfi <- reactiveVal(NA)
   ### Observer for text input
   observeEvent(input$getbmfi, {
     req(sabgal())
@@ -581,11 +581,11 @@ server <- function(input, output, session) {
   observe({
     if (grepl('[^0-9\\.]', input$bmfi)) {
       showNotification(
-        "Background fluorescence must be a positive numeric value. Ej 0.02",
+        "Background fluorescence must be a positive numeric value. Ej 23.2",
         type = 'error'
       )
-      updateTextInput(session, 'bmfi', value = "0")
-      bmfi(0)
+      updateTextInput(session, 'bmfi', value = "")
+      bmfi(NA)
     } else {
       bmfi(as.numeric(input$bmfi))
     }
