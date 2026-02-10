@@ -170,7 +170,7 @@ ui <- fluidPage(
           actionButton('getbmfi', 'Get')
         )
       ),
-      checkboxInput("saven","Save nuclei segmentation)",value = F),
+      checkboxInput("saven","Save nuclei segmentation",value = F),
       textOutput("outdirtext"),
       shinyDirButton(
         id = 'outdir',
