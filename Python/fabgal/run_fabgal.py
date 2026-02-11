@@ -96,11 +96,11 @@ def run_fabgal(cfg: FABGalConfig):
     with BGalres.open('w') as bgal_f:
 
         # Create file header
-        bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tPxArea\tBgal_RawIntDen\n")
+        bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tPxArea\tBgal_RawIntDen\tMean_Intens\n")
 
         # Write calculations to file       
-        for k, (npx, npxtot, areapos, areatot, pxarea, RawIntDen) in bres.items():
-            bgal_f.write(f"{k}\t{npx}\t{npxtot}\t{areapos}\t{areatot}\t{pxarea}\t{RawIntDen}\n")
+        for k, (npx, npxtot, areapos, areatot, pxarea, RawIntDen,MeanIntens) in bres.items():
+            bgal_f.write(f"{k}\t{npx}\t{npxtot}\t{areapos}\t{areatot}\t{pxarea}\t{RawIntDen}\t{MeanIntens}\n")
 
     # End of B-Gal quantification message
     logger.info("Finished B-Gal quantification")
