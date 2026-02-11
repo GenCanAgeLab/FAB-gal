@@ -139,7 +139,7 @@ ui <- fluidPage(
       ),
       actionButton('ApplyTh', "Count and filter", class = "btn-primary"),
       checkboxInput('rmborder', "Remove on edges", FALSE),
-      sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
+      sliderInput('nsize', 'Area (in pixels)', 0, 10000, c(0, 10000))
     ),
     ### Pixel size, MFI and output dir panel ----
     wellPanel(
@@ -337,10 +337,10 @@ ui <- fluidPage(
   tags$head(
     tags$style(
       '
-    .well {padding:2px; margin-bottom: 2px;}
-    .form-group {margin-bottom: 2px;}
-    .checkbox label {font-weight: bold;}
-    .shiny-notification {overflow-wrap: break-word;}
+      .well {padding:2px; margin-bottom: 2px;}
+      .form-group {margin-bottom: 2px;}
+      .checkbox label {font-weight: bold;}
+      .shiny-notification {overflow-wrap: break-word;}
       '
     )
   )
@@ -693,7 +693,9 @@ server <- function(input, output, session) {
     # n_objects <- computeFeatures.shape(n_seg)[,'s.area']
     n_objects <- c(table(c(n_seg), exclude = 0)) # Way faster
     apply_th(TRUE)
-    updateSliderInput(session, 'nsize', max = as.integer(max(n_objects)))
+    # Set slider area
+    nmax <- as.integer(max(n_objects))
+    updateSliderInput(session, 'nsize', value=c(50,nmax),max = nmax)
     nuclei_seg(n_seg)
     nuclei_objects(n_objects)
   })
