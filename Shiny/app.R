@@ -27,10 +27,14 @@ ui <- fluidPage(
       style = "text-align: center;",
       column(
         width = 3,
-        img(
-          src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
-          align = "rigth",
-          height = 100
+        a(
+          img(
+            src = "Logo.png",
+            align = "rigth",
+            height = 80
+          ),
+          href="https://github.com/antotartier/FAB-gal",
+          target="_blank"
         )
       ),
       column(
@@ -39,19 +43,23 @@ ui <- fluidPage(
         h4(
           a(
             "Genomes, Cancer and Aging (GenCanAge) Group",
-            href = "https://portalinvestigacion.uniovi.es/grupos/77669/detalle?lang=en",
+            href = "https://github.com/GenCanAgeLab",
             target = "_blank"
           )
         )
       ),
       column(
         width = 3,
-        img(
-          src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+        a(
+          img(
+          src = "Logo_gencanage.jpeg",
           align = "rigth",
-          height = 100
+          height = 80
+          ),
+          href="https://github.com/GenCanAgeLab",
+          target="_blank"
         )
-      )
+        )
     )
   ),
   ## SidebarPanel ----
@@ -128,12 +136,7 @@ ui <- fluidPage(
         max = 1001,
         value = 51,
         step = 1
-      )
-    ),
-    ### Nuclei segmentation wellpanel ----
-    wellPanel(
-      style = "background: #eddcd3",
-      align = "center",
+      ),
       actionButton('ApplyTh', "Count and filter", class = "btn-primary"),
       checkboxInput('rmborder', "Remove on edges", TRUE),
       sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
@@ -159,7 +162,7 @@ ui <- fluidPage(
         column(
           width = 7,
           align = 'center',
-          textInput('bmfi', NULL, "0", placeholder = "Ej. 23")
+          textInput('bmfi', NULL, "", placeholder = "Ej. 23")
         ),
         column(
           width = 5,
@@ -167,7 +170,7 @@ ui <- fluidPage(
           actionButton('getbmfi', 'Get')
         )
       ),
-      checkboxInput("saven","Save nuclei segmentation)",value = F),
+      checkboxInput("saven","Save nuclei segmentation",value = F),
       textOutput("outdirtext"),
       shinyDirButton(
         id = 'outdir',
@@ -281,17 +284,55 @@ ui <- fluidPage(
       br()
     )
   ),
+  ## Footer ----
   fluidRow(
     style = "text-align: center;",
     p(
-      "Developed by Alejandro P. Ugalde, Antonio Garcia-Bernardo Tartiere and David Roiz del Valle"
+      "Developed by Antonio Garcia-Bernardo Tartiere, Alejandro P. Ugalde and David Roiz del Valle"
     ),
     a(
       "github.com/GenCanAgeLab/SAbGal_quant",
-      href = "https://github.com/GenCanAgeLab/SAbGal_quant",
+      href = "https://github.com/antotartier/FAB-gal",
       target = "_blank"
     )
   ),
+  br(),
+  fluidRow(
+    style = "text-align: center;",
+    a(
+      img(
+      src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+      align = "rigth",
+      height = 80
+      ),
+      href="https://www.uniovi.es/"
+    ),
+    a(
+      img(
+        src = "https://ispa-finba.es/wp-content/uploads/2019/12/ISPA_marca_principal_color-150x150.png",
+        align = "rigth",
+        height = 80
+      ),
+      href="https://ispa-finba.es/"
+    ),
+    a(
+      img(
+        src = "Logo_iuopa.jpg",
+        align = "rigth",
+        height = 80
+      ),
+      href="https://www.unioviedo.es/IUOPA/"
+    ),
+    a(
+      img(
+        src = "  https://www.aei.gob.es/sites/default/files/inline-images/miciu-cofinanciadoUE-aei.png",
+        align = "rigth",
+        height = 80
+      ),
+      href="https://www.aei.gob.es/"
+    )
+  ),
+  
   ## CSS Styling ----
   tags$head(
     tags$style(
@@ -374,7 +415,7 @@ server <- function(input, output, session) {
     imgpath(NULL)
     updateSliderInput(session, 'thres.n', value = c(0, 255), min = 0, max = 255)
     updateSliderInput(session, 'thres.s', value = c(0, 255), min = 0, max = 255)
-    updateTextInput(session, 'bmfi', value = "0")
+    updateTextInput(session, 'bmfi', value = "")
     updateTextInput(session, 'pxarea', value = "")
     outdir(mydir()) # Set output dir to current dir
   })
@@ -527,7 +568,7 @@ server <- function(input, output, session) {
 
   ### Background fluorescence ----
 
-  bmfi <- reactiveVal(0)
+  bmfi <- reactiveVal(NA)
   ### Observer for text input
   observeEvent(input$getbmfi, {
     req(sabgal())
@@ -540,11 +581,11 @@ server <- function(input, output, session) {
   observe({
     if (grepl('[^0-9\\.]', input$bmfi)) {
       showNotification(
-        "Background fluorescence must be a positive numeric value. Ej 0.02",
+        "Background fluorescence must be a positive numeric value. Ej 23.2",
         type = 'error'
       )
-      updateTextInput(session, 'bmfi', value = "0")
-      bmfi(0)
+      updateTextInput(session, 'bmfi', value = "")
+      bmfi(NA)
     } else {
       bmfi(as.numeric(input$bmfi))
     }
@@ -789,7 +830,7 @@ server <- function(input, output, session) {
 
   # Observer for "Click Here To Learn More"
   observeEvent(input$help, {
-    browseURL("https://github.com/antotartier/FAB-Gal/wiki/Desktop-application")
+    browseURL("https://github.com/antotartier/FAB-gal/wiki")
   })
 
   ## Outputs ----
