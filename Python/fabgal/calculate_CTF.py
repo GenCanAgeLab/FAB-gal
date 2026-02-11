@@ -50,7 +50,7 @@ def calculate_CTF(cfg: FABGalConfig):
         BGal_backgr = cfg.backgr_val
     elif cfg.backgr_img is not None:
         backgr_img = sub(r'(?i)\.tiff?$', '', cfg.backgr_img)
-        BGal_backgr = bgaldf.at[backgr_img, 'BGal_RawIntDen'] / bgaldf.at[backgr_img, 'NpxTot']
+        BGal_backgr = bgaldf.loc[bgaldf['File'] == backgr_img, 'Mean_Intens'].values[0]       
     else:
         computeCTF = False
         print("No B-gal background information supplied. Will not compute CTF.")

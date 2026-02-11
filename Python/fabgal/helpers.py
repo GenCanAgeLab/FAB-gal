@@ -40,6 +40,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
             4. Physical area of the image (AreaTot)
             5. Pixel area of the image (pxarea)
             6. Raw integrated density of positive pixels (Bgal_RawIntDen)
+            7. Mean intensity of signal in the image (Mean_Intens)
     """
     ##### Get pixel area info #####
 
@@ -80,8 +81,9 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
         AreaTot = None
     
     RawIntDen = np.sum(imgdata[mask]).item()
+    MeanIntens = np.mean(imgdata).item()
     
-    return [NpxPos, NpxTot, AreaPos, AreaTot, pxarea, RawIntDen]
+    return [NpxPos, NpxTot, AreaPos, AreaTot, pxarea, RawIntDen,MeanIntens]
 
 
 def subtract_background(image, radius : int) -> NDArray[np.generic]:
