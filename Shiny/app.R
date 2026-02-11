@@ -82,11 +82,6 @@ ui <- fluidPage(
             "schan",
             label = NULL,
             choices = NULL,
-            options = list(
-              allowEmptyOption = TRUE,
-              showEmptyOptionInDropdown = TRUE,
-              emptyOptionLabel = "None"
-            )
           )
         )
       ),
@@ -498,33 +493,31 @@ server <- function(input, output, session) {
 
   ### Valid image actions ----
   
-  nchan <- reactive({
-    input$nchan
-  })
-  
-  schan <- reactive({
-    input$schan    
-  })
-  
   # Logic to update channels only when the first image is open
   updatechan <- reactiveVal(TRUE)
-  observe({
+  observeEvent(valid_img(),{
     req(valid_img(), nc())
     # Actual channel selection (it there is one)
-    maxchan <- max(as.numeric(c(schan(), nchan(), 1)), na.rm = T)
+    n <- input$nchan
+    s <- input$schan
+    maxchan <- max(as.numeric(c(n,s, 1)), na.rm = T)
     # update selectize inputs if required
     if (updatechan() == TRUE | nc() < maxchan) {
       if (nc() >= 2) {
         n <- 1
         s <- 2
       } else {
-        n <- NULL
+        n <- ""
         s <- 1
       }
-      updateSelectizeInput(session,'nchan',choices = 1:nc(),selected = n)
-      updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
       updatechan(FALSE)
     }
+    if (nc() == 1){
+      n <- ""
+      s <- 1
+    }
+    updateSelectizeInput(session,'nchan',choices = 1:nc(),selected = n)
+    updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
   })
 
   ### Pixel physical size ----
@@ -606,9 +599,9 @@ server <- function(input, output, session) {
   ### Nuclei Preprocessing ----
   nuclei <- reactive({
     req(valid_img())
-    validate(need(nchan(), "Select a channel"))
+    validate(need(input$nchan, "Select a channel"))
     tryCatch(
-      get_channel(valid_img(), nchan()),
+      get_channel(valid_img(), input$nchan),
       error = function(e) {
         return(NULL)
       }
@@ -752,9 +745,9 @@ server <- function(input, output, session) {
   # Create sabgal image when selecting a channel
   sabgal <- reactive({
     req(valid_img())
-    validate(need(schan(),"Please select a channel"))
+    validate(need(input$schan,"Please select a channel"))
     tryCatch(
-      get_channel(valid_img(), schan()),
+      get_channel(valid_img(), input$schan),
       error = function(e) {
         return(NULL)
       }
@@ -809,7 +802,7 @@ server <- function(input, output, session) {
 
   # Observer for "Measure" button
   observeEvent(input$run, {
-    req(imgpath(), schan())
+    req(imgpath(), input$schan)
     checkrun(input,img_bitdepth())
     withProgress(
       {
@@ -829,7 +822,7 @@ server <- function(input, output, session) {
   # Observer for "Run all images" button
   observeEvent(input$run.all, {
     req(mydir())
-    req(schan())
+    req(input$schan)
     # Get filtered files using the reactive value
     if (length(filtered_files()) == 0) {
       showNotification(
