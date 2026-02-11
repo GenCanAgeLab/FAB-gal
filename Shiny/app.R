@@ -116,14 +116,14 @@ ui <- fluidPage(
       align = "center",
       div(strong("Nuclei segmentation"), style = "text-align:center"),
       br(),
-      sliderInput(
-        "sigma",
-        label = "Gaussian blur",
-        min = 0,
-        max = 10,
-        value = 0,
-        step = 0.1
-      ),
+      # sliderInput(
+      #   "sigma",
+      #   label = "Gaussian blur",
+      #   min = 0,
+      #   max = 10,
+      #   value = 0,
+      #   step = 0.1
+      # ),
       checkboxInput(
         'sback',
         label = 'Substract background',
@@ -131,14 +131,14 @@ ui <- fluidPage(
       ),
       sliderInput(
         "radius",
-        label = "Radius",
+        label = "Rolling ball radius",
         min = 21,
         max = 1001,
         value = 51,
         step = 1
       ),
       actionButton('ApplyTh', "Count and filter", class = "btn-primary"),
-      checkboxInput('rmborder', "Remove on edges", TRUE),
+      checkboxInput('rmborder', "Remove on edges", FALSE),
       sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
     ),
     ### Pixel size, MFI and output dir panel ----
@@ -540,18 +540,27 @@ server <- function(input, output, session) {
       },
       error = function(e) {
         showNotification(
-          "Could not extract pixel dimensions. 
-                         Try exporting using ome-tiff or enter it manually",
+          paste0('Error: ', e),
           type = 'error'
         )
-        return("")
       }
     )
-    if (!is.null(pxa)) {
-      updateTextInput(session, 'pxarea', value = pxa)
+    if (is.null(pxa)) {
+      px_area(NA)
+      return(NULL)
+      }
+    if (pxa$pxa == ""){
+      showNotification(pxa$error,type='error')
+      px_area(NA)
+    } else {
+      if (!is.null(pxa$error)){
+        showNotification(pxa$error,type='warning')
+      }
+      px_area(pxa$pxa)
+      updateTextInput(session, 'pxarea', value = pxa$pxa)
     }
   })
-
+  
   #### Observer for get button
   observe({
     if (grepl('[^0-9\\.]', input$pxarea)) {
@@ -607,27 +616,31 @@ server <- function(input, output, session) {
   })
 
   # Reactive to store nuclei blurred
-  nuclei_b <- reactive({
-    req(nuclei())
-    if (input$sigma > 0) {
-      gblur(nuclei(), input$sigma)
-    } else {
-      nuclei()
-    }
-  })
+  # nuclei_b <- reactive({
+  #   req(nuclei())
+  #   if (input$sigma > 0) {
+  #     gblur(nuclei(), input$sigma)
+  #   } else {
+  #     nuclei()
+  #   }
+  # })
 
   # Reactive to store nuclei background subtracted
   nuclei_bgs <- reactive({
-    req(nuclei_b())
+    # req(nuclei_b())
+    req(nuclei())
     if (input$sback == TRUE) {
       tryCatch({
-        subtract_background(nuclei_b(), input$radius)
+        # subtract_background(nuclei_b(), input$radius)
+        subtract_background(nuclei(), input$radius)
       }, error = function(e) {
         showNotification(paste("Error in background subtraction:", e$message), type = "error")
-        nuclei_b()
+        # nuclei_b()
+        nuclei()
       })
     } else {
-      nuclei_b()
+      # nuclei_b()
+      nuclei()
     }
   })
 
@@ -795,6 +808,7 @@ server <- function(input, output, session) {
   # Observer for "Measure" button
   observeEvent(input$run, {
     req(imgpath(), schan())
+    checkrun(input,img_bitdepth())
     withProgress(
       {
         # Process image
@@ -823,6 +837,7 @@ server <- function(input, output, session) {
       return()
     }
     # Process all images
+    checkrun(input,img_bitdepth())
     image_files <- file.path(mydir(), filtered_files())
     # Process all images
     batch_results(process_all_images(image_files, input,outdir()))

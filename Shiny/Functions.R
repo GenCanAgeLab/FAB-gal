@@ -49,21 +49,24 @@
   
 # Get pixel resolution----
   get_pxarea <- function(img_obj){
-    pxsize <- c(globalMetadata(img_obj)$XResolution, globalMetadata(img_obj)$YResolution)
-    oriunit <- tolower(globalMetadata(img_obj)$ResolutionUnit)
-    resunit <- NA
-    if (oriunit %in% c("cm","centimeter")){
-      pxsize <- pxsize / 10000
-      resunit <- "micron^2"
+    pxX <- globalMetadata(img_obj)$XResolution
+    pxY <- globalMetadata(img_obj)$YResolution
+    pxA <- pxX * pxY
+    if (length(pxA) == 0 || is.na(pxA)){
+      return(list('pxa'="",error="pixelSize not available"))
     }
-    if (oriunit %in% c("um","micron","micrometer")){
-      resunit <- "micron^2"
+    pxU <- tolower(globalMetadata(img_obj)$ResolutionUnit)
+    if (is.null(pxU)){
+      return(list('pxa'="",error="pixelSize units not available, assuming is micrometers"))
     }
-    if (!is.na(resunit)){
-      return( 1/prod(pxsize))
-    } else {
-      return(NULL)
+    if (pxU %in% c("um","micron","micrometer")){
+      return(list('pxa'= 1/pxA, error = NULL))
+      }
+    if (pxU %in% c("cm","centimeter")){
+      pxA <- pxA / 1E8
+      return(list('pxa'= 1/pxA, error = NULL))
     }
+    return(list('pxa'=1/pxA, error="pixelSize units not recognized, assuming is micrometers"))    
     }
 
 # Subtract background using ImageJ rolling ball algorithm----
@@ -280,10 +283,10 @@ process_single_image <- function(img_path, appsets,outdir=NULL) {
 
   # Run thresholding for nuclei
   run_thresh <- function(img_obj, input){
-    # Gaussian blur
-    if (input$sigma > 0){
-      img_obj <- gblur(img_obj, input$sigma)
-    }
+    # # Gaussian blur
+    # if (input$sigma > 0){
+    #   img_obj <- gblur(img_obj, input$sigma)
+    # }
     # Background correction
     if (input$sback == TRUE){
       img_obj <- subtract_background(img_obj, input$radius)
@@ -304,7 +307,7 @@ process_single_image <- function(img_path, appsets,outdir=NULL) {
     NpxPos <- sum(img_th == 1) 
     RawIntDen <- sum(img_obj[img_th == 1])
     CTF <- RawIntDen - (as.numeric(appsets$bmfi)*NpxPos)
-    CTFpx <- CTF / NpxPos
+    CTFpx <- CTF / NimagePx
     CTFpa <- CTF / Area
     return(list(
       NimagePx,
@@ -333,3 +336,32 @@ process_single_image <- function(img_path, appsets,outdir=NULL) {
     })
   }
   
+# Helper function to check if no thershold has been set
+  checknoth <- function(th,bitdepth){
+    if (all(th == c(0, bitdepth - 1)))
+      return(TRUE)
+    else {
+      return(FALSE)
+    }
+  }
+  
+# Check run
+  checkrun <- function(appsets,bitdepth){
+    warns <- NULL
+    errors <- NULL
+    if (appsets$bmfi == ""){
+      warns <- c(warns,"Background MFI not set, corrected fluorescence cannot be calculated")
+    }
+    if (checknoth(appsets$thres.s,bitdepth)){
+      warns <- c(warns, "No threshold has been set for SABGal, results can make no sense")
+    }
+    if (appsets$nchan != "" & checknoth(appsets$thres.n,bitdepth)){
+      warns <- c(warns, "No threshold has been set for nuclei, results can make no sense")
+    }
+    if (appsets$px_area == ""){
+      warns <- c(warns,"Pixel dimensions not set, calculations per Area will not be available")
+    }
+    for (w in warns){
+      showNotification(w,type='warning')
+    }
+  }
