@@ -404,7 +404,7 @@ server <- function(input, output, session) {
     imgpath(input$imgpath)
   })
 
-  ### Reset things when changing directory ----
+  ### Actions when changing directory ----
   observeEvent(mydir(), {
     updatechan(TRUE)
     imgpath(NULL)
@@ -437,6 +437,8 @@ server <- function(input, output, session) {
       showNotification("Output directory will be:",outdir(),type="message")
     }
   })
+  
+  
   
   ## Image loading ----
 
@@ -494,7 +496,9 @@ server <- function(input, output, session) {
   ### Valid image actions ----
   
   # Logic to update channels only when the first image is open
+  # or when the image has less channels that currently set
   updatechan <- reactiveVal(TRUE)
+  
   observeEvent(valid_img(),{
     req(valid_img(), nc())
     # Actual channel selection (it there is one)
@@ -512,6 +516,7 @@ server <- function(input, output, session) {
       }
       updatechan(FALSE)
     }
+    # If image has only when channel, set it to sabgal
     if (nc() == 1){
       n <- ""
       s <- 1
@@ -520,6 +525,7 @@ server <- function(input, output, session) {
     updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
   })
 
+  
   ### Pixel physical size ----
 
   px_area <- reactiveVal(NA)
@@ -593,6 +599,8 @@ server <- function(input, output, session) {
     }
   })
 
+  
+  observe({print("pxarea");print(input$pxarea);print("bmfi");print(input$bmfi)})
   
   ## Nuclei  processing ----
 

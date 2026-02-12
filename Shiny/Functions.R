@@ -1,9 +1,9 @@
 
 # Read image ----
-  myreadimg <- function(imgpath){
+  myreadimg <- function(imgpath, readmeta=T){
     img_obj <- read.image(imgpath,
                       proprietary.metadata = F,
-                      read.metadata = T,
+                      read.metadata = readmeta,
                       normalize = F)
     colorMode(img_obj) <- 'Grayscale'
     img_obj
@@ -148,8 +148,6 @@
   }
   
   
-
-
 # Function to report pixel intensity ----
   calc_bgalstats <- function(img_obj,imgth,coords) {
     perA <- sum(imgth == 1) * 100 / length(imgth)
@@ -160,7 +158,7 @@
       }, error= function(e) {return(NA)}
       )
     } else {cint <- NA}
-    sprintf("%d  MFI = %.2f  Sel_Area = %.1f%%",cint,mfi,perA)
+    sprintf("%d  MFI = %.2f  Sel_Area = %.2f%%",cint,mfi,perA)
   }    
   
   
@@ -188,7 +186,7 @@ process_single_image <- function(img_path, appsets,outdir=NULL) {
   errors <- NULL
   # Load image
   img_obj <- tryCatch(
-    {myreadimg(img_path)},
+    {myreadimg(img_path,readmeta = F)},
     error = function(e) {
       msg = "Error reading file"
       showNotification(paste(msg,":",basename(img_path)),type='error')
@@ -278,7 +276,7 @@ process_single_image <- function(img_path, appsets,outdir=NULL) {
       rmlabs <- setdiff(names(feat),names(feat.f))
       colorLabels(rmObjects(img_obj,rmlabs))
     } else {NULL}
-    return(list("Count"=length(feat.f),"Maskn"=maskn))
+    return(list("Count"=as.integer(length(feat.f)),"Maskn"=maskn))
   }
 
   # Run thresholding for nuclei
@@ -358,7 +356,8 @@ process_single_image <- function(img_path, appsets,outdir=NULL) {
     if (appsets$nchan != "" & checknoth(appsets$thres.n,bitdepth)){
       warns <- c(warns, "No threshold has been set for nuclei, results can make no sense")
     }
-    if (appsets$px_area == ""){
+    print(appsets$pxarea)
+    if (appsets$pxarea == ""){
       warns <- c(warns,"Pixel dimensions not set, calculations per Area will not be available")
     }
     for (w in warns){
