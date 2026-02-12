@@ -36,6 +36,39 @@
     }
   }
 
+# Calculate crop region based on brush coordinates ----
+  get_crop_region_from_brush <- function(img, brush, previous_crop = NULL) {
+    # If no brush region selected, return NULL
+    if (is.null(brush)) {
+      return(NULL)
+    }
+    
+    # Get dimensions of currently displayed image
+    img_width <- nrow(img)    # x dimension (horizontal)
+    img_height <- ncol(img)   # y dimension (vertical)
+    
+    # Convert brush coordinates to pixel indices with proper bounds checking
+    xmin <- max(1, min(img_width, round(brush$xmin)))
+    xmax <- max(1, min(img_width, round(brush$xmax)))
+    ymin <- max(1, min(img_height, round(brush$ymin)))
+    ymax <- max(1, min(img_height, round(brush$ymax)))
+    
+    # Ensure min < max
+    if (xmin > xmax) xmin <- xmax
+    if (ymin > ymax) ymin <- ymax
+    
+    # Translate coordinates if already zoomed (sequential zooming)
+    if (!is.null(previous_crop)) {
+      xmin <- previous_crop$xmin + xmin - 1
+      xmax <- previous_crop$xmin + xmax - 1
+      ymin <- previous_crop$ymin + ymin - 1
+      ymax <- previous_crop$ymin + ymax - 1
+    }
+    
+    # Return region coordinates
+    return(list(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax))
+  }
+
 # Extract bit depth from image metadata ----
   get_bitdepth <- function(img_obj){
     tryCatch({
