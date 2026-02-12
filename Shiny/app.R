@@ -82,11 +82,6 @@ ui <- fluidPage(
             "schan",
             label = NULL,
             choices = NULL,
-            options = list(
-              allowEmptyOption = TRUE,
-              showEmptyOptionInDropdown = TRUE,
-              emptyOptionLabel = "None"
-            )
           )
         )
       ),
@@ -116,14 +111,14 @@ ui <- fluidPage(
       align = "center",
       div(strong("Nuclei segmentation"), style = "text-align:center"),
       br(),
-      sliderInput(
-        "sigma",
-        label = "Gaussian blur",
-        min = 0,
-        max = 10,
-        value = 0,
-        step = 0.1
-      ),
+      # sliderInput(
+      #   "sigma",
+      #   label = "Gaussian blur",
+      #   min = 0,
+      #   max = 10,
+      #   value = 0,
+      #   step = 0.1
+      # ),
       checkboxInput(
         'sback',
         label = 'Substract background',
@@ -131,15 +126,15 @@ ui <- fluidPage(
       ),
       sliderInput(
         "radius",
-        label = "Radius",
+        label = "Rolling ball radius",
         min = 21,
         max = 1001,
         value = 51,
         step = 1
       ),
       actionButton('ApplyTh', "Count and filter", class = "btn-primary"),
-      checkboxInput('rmborder', "Remove on edges", TRUE),
-      sliderInput('nsize', 'Area', 0, 10000, c(0, 10000))
+      checkboxInput('rmborder', "Remove on edges", FALSE),
+      sliderInput('nsize', 'Area (in pixels)', 0, 10000, c(0, 10000))
     ),
     ### Pixel size, MFI and output dir panel ----
     wellPanel(
@@ -337,10 +332,10 @@ ui <- fluidPage(
   tags$head(
     tags$style(
       '
-    .well {padding:2px; margin-bottom: 2px;}
-    .form-group {margin-bottom: 2px;}
-    .checkbox label {font-weight: bold;}
-    .shiny-notification {overflow-wrap: break-word;}
+      .well {padding:2px; margin-bottom: 2px;}
+      .form-group {margin-bottom: 2px;}
+      .checkbox label {font-weight: bold;}
+      .shiny-notification {overflow-wrap: break-word;}
       '
     )
   )
@@ -409,7 +404,7 @@ server <- function(input, output, session) {
     imgpath(input$imgpath)
   })
 
-  ### Reset things when changing directory ----
+  ### Actions when changing directory ----
   observeEvent(mydir(), {
     updatechan(TRUE)
     imgpath(NULL)
@@ -442,6 +437,8 @@ server <- function(input, output, session) {
       showNotification("Output directory will be:",outdir(),type="message")
     }
   })
+  
+  
   
   ## Image loading ----
 
@@ -498,35 +495,37 @@ server <- function(input, output, session) {
 
   ### Valid image actions ----
   
-  nchan <- reactive({
-    input$nchan
-  })
-  
-  schan <- reactive({
-    input$schan    
-  })
-  
   # Logic to update channels only when the first image is open
+  # or when the image has less channels that currently set
   updatechan <- reactiveVal(TRUE)
-  observe({
+  
+  observeEvent(valid_img(),{
     req(valid_img(), nc())
     # Actual channel selection (it there is one)
-    maxchan <- max(as.numeric(c(schan(), nchan(), 1)), na.rm = T)
+    n <- input$nchan
+    s <- input$schan
+    maxchan <- max(as.numeric(c(n,s, 1)), na.rm = T)
     # update selectize inputs if required
     if (updatechan() == TRUE | nc() < maxchan) {
       if (nc() >= 2) {
         n <- 1
         s <- 2
       } else {
-        n <- NULL
+        n <- ""
         s <- 1
       }
-      updateSelectizeInput(session,'nchan',choices = 1:nc(),selected = n)
-      updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
       updatechan(FALSE)
     }
+    # If image has only when channel, set it to sabgal
+    if (nc() == 1){
+      n <- ""
+      s <- 1
+    }
+    updateSelectizeInput(session,'nchan',choices = 1:nc(),selected = n)
+    updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
   })
 
+  
   ### Pixel physical size ----
 
   px_area <- reactiveVal(NA)
@@ -540,18 +539,27 @@ server <- function(input, output, session) {
       },
       error = function(e) {
         showNotification(
-          "Could not extract pixel dimensions. 
-                         Try exporting using ome-tiff or enter it manually",
+          paste0('Error: ', e),
           type = 'error'
         )
-        return("")
       }
     )
-    if (!is.null(pxa)) {
-      updateTextInput(session, 'pxarea', value = pxa)
+    if (is.null(pxa)) {
+      px_area(NA)
+      return(NULL)
+      }
+    if (pxa$pxa == ""){
+      showNotification(pxa$error,type='error')
+      px_area(NA)
+    } else {
+      if (!is.null(pxa$error)){
+        showNotification(pxa$error,type='warning')
+      }
+      px_area(pxa$pxa)
+      updateTextInput(session, 'pxarea', value = pxa$pxa)
     }
   })
-
+  
   #### Observer for get button
   observe({
     if (grepl('[^0-9\\.]', input$pxarea)) {
@@ -592,14 +600,16 @@ server <- function(input, output, session) {
   })
 
   
+  observe({print("pxarea");print(input$pxarea);print("bmfi");print(input$bmfi)})
+  
   ## Nuclei  processing ----
 
   ### Nuclei Preprocessing ----
   nuclei <- reactive({
     req(valid_img())
-    validate(need(nchan(), "Select a channel"))
+    validate(need(input$nchan, "Select a channel"))
     tryCatch(
-      get_channel(valid_img(), nchan()),
+      get_channel(valid_img(), input$nchan),
       error = function(e) {
         return(NULL)
       }
@@ -607,27 +617,31 @@ server <- function(input, output, session) {
   })
 
   # Reactive to store nuclei blurred
-  nuclei_b <- reactive({
-    req(nuclei())
-    if (input$sigma > 0) {
-      gblur(nuclei(), input$sigma)
-    } else {
-      nuclei()
-    }
-  })
+  # nuclei_b <- reactive({
+  #   req(nuclei())
+  #   if (input$sigma > 0) {
+  #     gblur(nuclei(), input$sigma)
+  #   } else {
+  #     nuclei()
+  #   }
+  # })
 
   # Reactive to store nuclei background subtracted
   nuclei_bgs <- reactive({
-    req(nuclei_b())
+    # req(nuclei_b())
+    req(nuclei())
     if (input$sback == TRUE) {
       tryCatch({
-        subtract_background(nuclei_b(), input$radius)
+        # subtract_background(nuclei_b(), input$radius)
+        subtract_background(nuclei(), input$radius)
       }, error = function(e) {
         showNotification(paste("Error in background subtraction:", e$message), type = "error")
-        nuclei_b()
+        # nuclei_b()
+        nuclei()
       })
     } else {
-      nuclei_b()
+      # nuclei_b()
+      nuclei()
     }
   })
 
@@ -680,7 +694,9 @@ server <- function(input, output, session) {
     # n_objects <- computeFeatures.shape(n_seg)[,'s.area']
     n_objects <- c(table(c(n_seg), exclude = 0)) # Way faster
     apply_th(TRUE)
-    updateSliderInput(session, 'nsize', max = as.integer(max(n_objects)))
+    # Set slider area
+    nmax <- as.integer(max(n_objects))
+    updateSliderInput(session, 'nsize', value=c(50,nmax),max = nmax)
     nuclei_seg(n_seg)
     nuclei_objects(n_objects)
   })
@@ -737,9 +753,9 @@ server <- function(input, output, session) {
   # Create sabgal image when selecting a channel
   sabgal <- reactive({
     req(valid_img())
-    validate(need(schan(),"Please select a channel"))
+    validate(need(input$schan,"Please select a channel"))
     tryCatch(
-      get_channel(valid_img(), schan()),
+      get_channel(valid_img(), input$schan),
       error = function(e) {
         return(NULL)
       }
@@ -794,7 +810,8 @@ server <- function(input, output, session) {
 
   # Observer for "Measure" button
   observeEvent(input$run, {
-    req(imgpath(), schan())
+    req(imgpath(), input$schan)
+    checkrun(input,img_bitdepth())
     withProgress(
       {
         # Process image
@@ -813,7 +830,7 @@ server <- function(input, output, session) {
   # Observer for "Run all images" button
   observeEvent(input$run.all, {
     req(mydir())
-    req(schan())
+    req(input$schan)
     # Get filtered files using the reactive value
     if (length(filtered_files()) == 0) {
       showNotification(
@@ -823,6 +840,7 @@ server <- function(input, output, session) {
       return()
     }
     # Process all images
+    checkrun(input,img_bitdepth())
     image_files <- file.path(mydir(), filtered_files())
     # Process all images
     batch_results(process_all_images(image_files, input,outdir()))
