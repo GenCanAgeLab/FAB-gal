@@ -854,7 +854,8 @@ server <- function(input, output, session) {
   ## Outputs ----
 
   # Reactive holding the type of nuclei display
-  nuclei_disp <- reactive({
+  nuclei2disp <- reactive({
+    req(nuclei())
     if (apply_th() == TRUE) {
       req(nuclei_filtered())
       return(colorLabels(nuclei_filtered()))}
@@ -872,13 +873,13 @@ server <- function(input, output, session) {
   
   ### Nuclei Plots ----
   output$nplot <- renderPlot({
-    # validate(need(nuclei_disp(),"Select an image"))
-    display(nuclei_disp(), method = 'raster')
+    # validate(need(nuclei2disp(),"Select an image"))
+    display(nuclei2disp(), method = 'raster')
   })
 
   ### SABGAL Plot ----
   
-  sabgal_dis <- reactive({
+  sabgal2disp <- reactive({
     req(img_bitdepth())
     if (all(input$thres.s == c(0, img_bitdepth() - 1))) {
       req(sabgal())
@@ -889,7 +890,7 @@ server <- function(input, output, session) {
     }
   }) 
   output$splot <- renderPlot({
-    display(sabgal_dis(), method = 'raster')
+    display(sabgal2disp(), method = 'raster')
   })
 
   ### Nuclei stats  ----
