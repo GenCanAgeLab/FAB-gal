@@ -268,11 +268,6 @@ ui <- fluidPage(
           actionButton('reset.ths', 'Reset'),
           plotOutput(
             outputId = "splot",
-            hover = hoverOpts(
-              id = "splot_hover",
-              delay = 500,
-              delayType = "throttle"
-            ),
             brush = brushOpts(
               id = "splot_brush",
               direction = "xy",
@@ -601,8 +596,8 @@ server <- function(input, output, session) {
   bmfi <- reactiveVal(NA)
   ### Observer for text input
   observeEvent(input$getbmfi, {
-    req(sabgal())
-    bmfi <- mean(sabgal())
+    req(sabgal(),sabgal_stats())
+    bmfi <- sabgal_stats()$mfi
     if (!is.null(bmfi)) {
       updateTextInput(session, 'bmfi', value = bmfi)
     }
@@ -803,22 +798,22 @@ server <- function(input, output, session) {
   })
 
   # Reactive to get sabgal coordinates
-  hover_coords <- reactive({
-    # req(input$splot_hover) # Renmove or bgalstats will be invalidated
-    coords <- unlist(input$splot_hover[c('x', 'y')])
-    if (!is.null(coords)) {
-      if (any(coords < 0)) {
-         NULL
-      } else {
-        round(coords)
-      }
-    }
-  })
+  # hover_coords <- reactive({
+  #   # req(input$splot_hover) # Renmove or bgalstats will be invalidated
+  #   coords <- unlist(input$splot_hover[c('x', 'y')])
+  #   if (!is.null(coords)) {
+  #     if (any(coords < 0)) {
+  #        NULL
+  #     } else {
+  #       round(coords)
+  #     }
+  #   }
+  # })
 
   # Bgal stats
   sabgal_stats <- reactive({
     req(sabgal(), sabgal_th())
-    calc_bgalstats(sabgal(), sabgal_th(), hover_coords())
+    calc_bgalstats(sabgal(), sabgal_th(), crop_region())
   })
 
   ### Measure and runAll ----
@@ -930,20 +925,12 @@ server <- function(input, output, session) {
   
   
   output$nplot <- renderPlot({
-<<<<<<< HEAD
     display(nplot_displayed(), method = 'raster')
-=======
-    # validate(need(nuclei2disp(),"Select an image"))
-    display(nuclei2disp(), method = 'raster')
->>>>>>> origin/APU
   })
 
   ### SABGAL Plot ----
   
-<<<<<<< HEAD
   # Reactive holding the sabgal image to display
-=======
->>>>>>> origin/APU
   sabgal2disp <- reactive({
     req(img_bitdepth())
     if (all(input$thres.s == c(0, img_bitdepth() - 1))) {
@@ -980,11 +967,7 @@ server <- function(input, output, session) {
   })
   
   output$splot <- renderPlot({
-<<<<<<< HEAD
     display(splot_displayed(), method = 'raster')
-=======
-    display(sabgal2disp(), method = 'raster')
->>>>>>> origin/APU
   })
 
   ### Nuclei stats  ----
@@ -1000,9 +983,10 @@ server <- function(input, output, session) {
 
   ### SABGAL stats ----
   output$stats.s <- renderPrint({
-    # req(sabgal_stats())
-    cat(sabgal_stats())
-  })
+    req(sabgal_stats())
+    sabst <- sabgal_stats()
+    cat(sprintf("MFI = %.2f  Sel_Area = %.2f%%",sabst$mfi,sabst$perA))
+    })
 
   ### Results table ----
   output$results_table <- renderTable({
