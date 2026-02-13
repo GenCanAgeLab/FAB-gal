@@ -56,11 +56,10 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
         if img.physical_pixel_sizes[1] is not None and img.physical_pixel_sizes[2] is not None:
             pxarea = img.physical_pixel_sizes[1] * img.physical_pixel_sizes[2]
             
-        # If there is no info about physical pixel size, defaults to 1 to perform calculations.
+        # If there is no info about physical pixel size, create a warning.
         else:
-            print("\nWARNING: Image does not have pixel physical sizes. Using default of 1 for B-Gal calculations.", end="\r", flush=True)
+            print("\nWARNING: Image does not have pixel physical sizes. No calculations per area will be performed.", end="\r", flush=True)
             pxInfo = False
-            pxarea = 1
     
     ##### Define pixel area units and establish area conversion factor #####
 
@@ -101,6 +100,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
     else:
         AreaPos = None
         AreaTot = None
+   
     
     RawIntDen = np.sum(imgdata[mask]).item()
     MeanIntens = np.mean(imgdata).item()
