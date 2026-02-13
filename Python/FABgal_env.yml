@@ -10,6 +10,7 @@ dependencies:
   - numpy
   - pandas
   - scikit-image
+  - edt
   - biapy==3.6.8
   - pip:
       - bioio==3.0.0
