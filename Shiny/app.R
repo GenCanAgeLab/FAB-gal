@@ -930,12 +930,20 @@ server <- function(input, output, session) {
   
   
   output$nplot <- renderPlot({
+<<<<<<< HEAD
     display(nplot_displayed(), method = 'raster')
+=======
+    # validate(need(nuclei2disp(),"Select an image"))
+    display(nuclei2disp(), method = 'raster')
+>>>>>>> origin/APU
   })
 
   ### SABGAL Plot ----
   
+<<<<<<< HEAD
   # Reactive holding the sabgal image to display
+=======
+>>>>>>> origin/APU
   sabgal2disp <- reactive({
     req(img_bitdepth())
     if (all(input$thres.s == c(0, img_bitdepth() - 1))) {
@@ -972,7 +980,11 @@ server <- function(input, output, session) {
   })
   
   output$splot <- renderPlot({
+<<<<<<< HEAD
     display(splot_displayed(), method = 'raster')
+=======
+    display(sabgal2disp(), method = 'raster')
+>>>>>>> origin/APU
   })
 
   ### Nuclei stats  ----
