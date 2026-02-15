@@ -36,6 +36,33 @@
     }
   }
 
+# Calculate crop region based on brush coordinates ----
+  get_crop_region_from_brush <- function(img, brush, previous_crop = NULL) {
+    if (is.null(brush)) {
+      return(NULL)
+    }
+    # Get dimensions of currently displayed image
+    img_width <- nrow(img)
+    img_height <- ncol(img)
+    # Convert brush coordinates to pixel indices
+    xmin <- max(1, min(img_width, round(brush$xmin)))
+    xmax <- max(1, min(img_width, round(brush$xmax)))
+    ymin <- max(1, min(img_height, round(brush$ymin)))
+    ymax <- max(1, min(img_height, round(brush$ymax)))
+    # Ensure min < max
+    if (xmin > xmax) xmin <- xmax
+    if (ymin > ymax) ymin <- ymax
+    # Translate coordinates if already zoomed
+    if (!is.null(previous_crop)) {
+      xmin <- previous_crop$xmin + xmin - 1
+      xmax <- previous_crop$xmin + xmax - 1
+      ymin <- previous_crop$ymin + ymin - 1
+      ymax <- previous_crop$ymin + ymax - 1
+    }
+    # Return region coordinates
+    return(list(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax))
+  }
+
 # Extract bit depth from image metadata ----
   get_bitdepth <- function(img_obj){
     tryCatch({
@@ -149,16 +176,14 @@
   
   
 # Function to report pixel intensity ----
-  calc_bgalstats <- function(img_obj,imgth,coords) {
-    perA <- sum(imgth == 1) * 100 / length(imgth)
-    mfi <- mean(img_obj)
+  calc_bgalstats <- function(img_obj,img_th,coords) {
     if (!is.null(coords)){
-      cint <- tryCatch({
-        img_obj[coords[1],coords[2]]
-      }, error= function(e) {return(NA)}
-      )
-    } else {cint <- NA}
-    sprintf("%d  MFI = %.2f  Sel_Area = %.2f%%",cint,mfi,perA)
+      img_obj <- img_obj[coords$xmin:coords$xmax, coords$ymin:coords$ymax]
+      img_th <- img_th[coords$xmin:coords$xmax, coords$ymin:coords$ymax]
+      }
+    perA <- sum(img_th == 1) * 100 / length(img_th)
+    mfi <- mean(img_obj)
+    return(list('mfi'=mfi,'perA'=perA))
   }    
   
   
