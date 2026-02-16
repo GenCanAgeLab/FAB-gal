@@ -9,6 +9,15 @@ from pathlib import Path
 import logging
 from bioio.writers import OmeTiffWriter
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Safely check if we are in Jupyter to handle screen clearing
+try:
+    from IPython.display import clear_output
+    is_jupyter = True
+except ImportError:
+    is_jupyter = False
+
 #### Log options ####
 
 import logging
@@ -16,7 +25,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, pxarea: float = None) -> List[float]:
+def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, pxarea: float = None, pxunit: str = None) -> List[float]:
     """
     Calculates the area and intensity of B-gal positive regions in an image.
 
@@ -25,12 +34,14 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
 
     Args:
         img: A BioImage object containing pixel size metadata.
-        parea (float): Pixel area of the image. Defaults to None, where the info will be extracted from the image or, if no info is found, defaults to 1.
         bgal_ch (int): The channel index for the B-gal signal.
         bgal_thmin (int): The minimum pixel intensity threshold.
         bgal_thmax (int, optional): The maximum pixel intensity threshold. 
             Defaults to 254 to exclude burned (saturated) pixels at 255 
             where real values are unknown.
+        pxarea (float): Pixel area of the image. Defaults to None, where the info will be extracted from the image or, if no info is found, defaults to 1.
+        pxunit (str): Pixel area units.
+
 
     Returns:
         list: A list containing three values:
@@ -39,8 +50,9 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
             3. Physical area of positive region (AreaPos)
             4. Physical area of the image (AreaTot)
             5. Pixel area of the image (pxarea)
-            6. Raw integrated density of positive pixels (Bgal_RawIntDen)
-            7. Mean intensity of signal in the image (Mean_Intens)
+            6. Pixel area units (pxunit)
+            7. Raw integrated density of positive pixels (Bgal_RawIntDen)
+            8. Mean intensity of signal in the image (Mean_Intens)
     """
     ##### Get pixel area info #####
 
@@ -53,17 +65,34 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
         if img.physical_pixel_sizes[1] is not None and img.physical_pixel_sizes[2] is not None:
             pxarea = img.physical_pixel_sizes[1] * img.physical_pixel_sizes[2]
             
-        # If there is no info about physical pixel size, defaults to 1 to perform calculations.
+        # If there is no info about physical pixel size, create a warning.
         else:
-            logger.info("\nWARNING: Image does not have pixel physical sizes. Using default of 1 for B-Gal calculations.", end="\r", flush=True)
+            print("\nWARNING: Image does not have pixel physical sizes. No calculations per area will be performed.", end="\r", flush=True)
             pxInfo = False
-            pxarea = 1
+    
+    ##### Define pixel area units and establish area conversion factor #####
+
+    pxareaunit = str()
+    area_conv = 1 # Conversion factor for pixel area (Defaults to 1 for µm^2)
+
+    if pxunit == "µm":
+        pxareaunit = "µm^2"
+    elif pxunit == "mm":
+        pxareaunit = "mm^2"
+        area_conv = 10^6       
+    elif pxunit == "cm":
+        pxareaunit = "cm^2"
+        area_conv = 10^8
+    else:
+        pxareaunit = None
     
     ##### Extract image data for the specific channel #####
 
-    imgdata = img.get_image_data("YX", C=bgal_ch)
-    
-    
+    try:
+        imgdata = img.get_image_data("YX",C=bgal_ch)
+    except IndexError as e:
+        raise IndexError(f"\nERROR: Image does not have B-gal input channel. Please check that B-gal channel parameters are correct.") from e
+
     ##### Create a boolean mask for pixels within the threshold #####
 
     mask = (imgdata >= bgal_thmin) & (imgdata <= bgal_thmax)
@@ -73,17 +102,19 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
     NpxPos = np.sum(mask).item()
     NpxTot = imgdata.size
 
+    # Area calculations based on pixel info
     if pxInfo is True:
-        AreaPos = NpxPos * pxarea
-        AreaTot = NpxTot * pxarea
+        AreaPos = NpxPos * pxarea * area_conv
+        AreaTot = NpxTot * pxarea * area_conv
     else:
         AreaPos = None
         AreaTot = None
+   
     
     RawIntDen = np.sum(imgdata[mask]).item()
     MeanIntens = np.mean(imgdata).item()
     
-    return [NpxPos, NpxTot, AreaPos, AreaTot, pxarea, RawIntDen,MeanIntens]
+    return [NpxPos, NpxTot, AreaPos, AreaTot, pxarea, pxareaunit, RawIntDen,MeanIntens]
 
 
 def subtract_background(image, radius : int) -> NDArray[np.generic]:
@@ -155,7 +186,7 @@ def subtract_background(image, radius : int) -> NDArray[np.generic]:
 
 def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out_path: str):
     """
-    Docstring para process_biapy_input
+    process_biapy_input
     """
     # Load nuclei channel
     try:
@@ -177,7 +208,7 @@ def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out
 
 def load_input(input_folder: str) -> List:
     """
-    Docstring para load_input
+    Load_input
     """
     # Check input folder
     try:
@@ -200,3 +231,44 @@ def load_input(input_folder: str) -> List:
         if inf.is_file() and inf.suffix.lower() not in allowed_ext:
             raise ValueError(f"Invalid file found: {inf.name}. Please ensure all items in input folder are .tif or .tiff.")
     return myfiles
+
+
+def choose_threshold(df) -> float:
+    """
+    Choose threshold
+    """
+
+    df['area_um'] = df.area * df.PxArea
+    sns.kdeplot(data=df, x="area_um", fill=True)
+    plt.show(block=False)
+
+    while True:
+        user_input = input(f"\nEnter nuclei threshold (in um): ")
+                
+        try:
+            thr = float(user_input)
+            
+            # If Jupyter, clear output
+            if is_jupyter:
+                clear_output(wait=True)
+            
+            # Close prior plots
+            plt.close('all')
+            
+            # 3. Create the new plot
+            sns.kdeplot(data=df, x="area_um", fill=True)
+            plt.axvline(thr, color='red', linestyle='--', label=f'Threshold: {thr}')
+            plt.title(f"Evaluating Threshold: {thr}")
+            plt.legend()
+            
+            # Show plot
+            plt.show(block=False)
+            
+            # 5. Get confirmation
+            confirm = input("Keep this threshold? (y/n): ").lower()
+            if confirm == 'y':
+                plt.close('all')
+                return thr
+                
+        except ValueError:
+            print("Error: Please enter a valid number.")

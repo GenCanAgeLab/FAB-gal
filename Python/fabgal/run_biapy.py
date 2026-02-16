@@ -97,7 +97,7 @@ def run_biapy(cfg: FABGalConfig):
     #### Save subtracted images from BiaPy input (if generated) ####
 
     if cfg.apply_subtract_background:
-        Path("biapy_input").rename(sub_images_out)
+        Path("biapy_input").replace(sub_images_out)
 
     ## If BiaPy ended correctly and sustract_background was not active, we delete biapy_input folder
     if not cfg.apply_subtract_background:
@@ -108,7 +108,7 @@ def run_biapy(cfg: FABGalConfig):
     biapy_config = Path(biapy_result_dir / cfg.experiment_name / "config_files")
 
     for file in biapy_config.iterdir():
-        file.rename(results_dir / "BiaPy_config.yaml")
+        file.replace(results_dir / "BiaPy_config.yaml")
 
     ### Delete extra files not used in the analysis ###
 
