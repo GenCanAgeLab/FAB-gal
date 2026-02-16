@@ -246,7 +246,18 @@ ui <- fluidPage(
           ),
           actionButton('runotsu.n', 'Auto'),
           actionButton('reset.thn', 'Reset'),
-          plotOutput("nplot")
+          plotOutput(
+            outputId = "nplot",
+            brush = brushOpts(
+              id = "nplot_brush",
+              direction = "xy",
+              delayType = "debounce",
+              delay = 500,
+              clip = TRUE,
+              resetOnNew = TRUE
+            )
+          ),
+          actionButton('reset.zoom.n', 'Reset Zoom')
         ),
         verbatimTextOutput('stats.n')
       ),
@@ -267,12 +278,16 @@ ui <- fluidPage(
           actionButton('reset.ths', 'Reset'),
           plotOutput(
             outputId = "splot",
-            hover = hoverOpts(
-              id = "splot_hover",
+            brush = brushOpts(
+              id = "splot_brush",
+              direction = "xy",
+              delayType = "debounce",
               delay = 500,
-              delayType = "throttle"
+              clip = TRUE,
+              resetOnNew = TRUE
             )
-          )
+          ),
+          actionButton('reset.zoom.s', 'Reset Zoom')
         ),
         verbatimTextOutput('stats.s')
       )
@@ -551,6 +566,8 @@ server <- function(input, output, session) {
     }
     updateSelectizeInput(session, 'nchan', choices = 1:nc(), selected = n)
     updateSelectizeInput(session, 'schan', choices = 1:nc(), selected = s)
+    # Reset zoom when loading a new image
+    crop_region(NULL)
   })
 
   ### Pixel physical size ----
@@ -606,8 +623,8 @@ server <- function(input, output, session) {
   bmfi <- reactiveVal(NA)
   ### Observer for text input
   observeEvent(input$getbmfi, {
-    req(sabgal())
-    bmfi <- mean(sabgal())
+    req(sabgal(), sabgal_stats())
+    bmfi <- sabgal_stats()$mfi
     if (!is.null(bmfi)) {
       updateTextInput(session, 'bmfi', value = bmfi)
     }
@@ -817,22 +834,22 @@ server <- function(input, output, session) {
   })
 
   # Reactive to get sabgal coordinates
-  hover_coords <- reactive({
-    # req(input$splot_hover) # Renmove or bgalstats will be invalidated
-    coords <- unlist(input$splot_hover[c('x', 'y')])
-    if (!is.null(coords)) {
-      if (any(coords < 0)) {
-        NULL
-      } else {
-        round(coords)
-      }
-    }
-  })
+  # hover_coords <- reactive({
+  #   # req(input$splot_hover) # Renmove or bgalstats will be invalidated
+  #   coords <- unlist(input$splot_hover[c('x', 'y')])
+  #   if (!is.null(coords)) {
+  #     if (any(coords < 0)) {
+  #        NULL
+  #     } else {
+  #       round(coords)
+  #     }
+  #   }
+  # })
 
   # Bgal stats
   sabgal_stats <- reactive({
     req(sabgal(), sabgal_th())
-    calc_bgalstats(sabgal(), sabgal_th(), hover_coords())
+    calc_bgalstats(sabgal(), sabgal_th(), crop_region())
   })
 
   ### Measure and runAll ----
@@ -884,8 +901,11 @@ server <- function(input, output, session) {
 
   ## Outputs ----
 
+  ### Nuclei Plots ----
+
   # Reactive holding the type of nuclei display
-  nuclei_disp <- reactive({
+  nuclei2disp <- reactive({
+    req(nuclei())
     if (apply_th() == TRUE) {
       req(nuclei_filtered())
       return(colorLabels(nuclei_filtered()))
@@ -902,15 +922,51 @@ server <- function(input, output, session) {
     nuclei_th()
   })
 
-  ### Nuclei Plots ----
+  # Reactive to store the crop region (coordinates only)
+  crop_region <- reactiveVal(NULL)
+
+  # Reactive expressions to compute displayed images based on crop region
+  nplot_displayed <- reactive({
+    req(nuclei2disp())
+    img <- nuclei2disp()
+    region <- crop_region()
+    if (!is.null(region)) {
+      # Handle both 2D and 3D images (grayscale vs RGB)
+      if (length(dim(img)) == 2) {
+        img <- img[region$xmin:region$xmax, region$ymin:region$ymax]
+      } else {
+        img <- img[region$xmin:region$xmax, region$ymin:region$ymax, ]
+      }
+    }
+    img
+  })
+
+  # Apply zoom when brush is drawn on nuclei plot
+  observeEvent(input$nplot_brush, {
+    req(nplot_displayed())
+    region <- get_crop_region_from_brush(
+      nplot_displayed(),
+      input$nplot_brush,
+      crop_region()
+    )
+    if (!is.null(region)) {
+      crop_region(region)
+    }
+  })
+
+  # Reset zoom for nuclei
+  observeEvent(input$reset.zoom.n, {
+    crop_region(NULL)
+  })
+
   output$nplot <- renderPlot({
-    # validate(need(nuclei_disp(),"Select an image"))
-    display(nuclei_disp(), method = 'raster')
+    display(nplot_displayed(), method = 'raster')
   })
 
   ### SABGAL Plot ----
 
-  sabgal_dis <- reactive({
+  # Reactive holding the sabgal image to display
+  sabgal2disp <- reactive({
     req(img_bitdepth())
     if (all(input$thres.s == c(0, img_bitdepth() - 1))) {
       req(sabgal())
@@ -920,8 +976,37 @@ server <- function(input, output, session) {
       sabgal_th()
     }
   })
+
+  # Reactive holding the cropped sabgal image to display
+  splot_displayed <- reactive({
+    img <- sabgal2disp()
+    region <- crop_region()
+    if (!is.null(region)) {
+      img <- img[region$xmin:region$xmax, region$ymin:region$ymax]
+    }
+    img
+  })
+
+  # Apply zoom when brush is drawn on sabgal plot
+  observeEvent(input$splot_brush, {
+    req(splot_displayed())
+    region <- get_crop_region_from_brush(
+      splot_displayed(),
+      input$splot_brush,
+      crop_region()
+    )
+    if (!is.null(region)) {
+      crop_region(region)
+    }
+  })
+
+  # Reset zoom for sabgal
+  observeEvent(input$reset.zoom.s, {
+    crop_region(NULL)
+  })
+
   output$splot <- renderPlot({
-    display(sabgal_dis(), method = 'raster')
+    display(splot_displayed(), method = 'raster')
   })
 
   ### Nuclei stats  ----
@@ -937,8 +1022,9 @@ server <- function(input, output, session) {
 
   ### SABGAL stats ----
   output$stats.s <- renderPrint({
-    # req(sabgal_stats())
-    cat(sabgal_stats())
+    req(sabgal_stats())
+    sabst <- sabgal_stats()
+    cat(sprintf("MFI = %.2f  Sel_Area = %.2f%%", sabst$mfi, sabst$perA))
   })
 
   ### Results table ----

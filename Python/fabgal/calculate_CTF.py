@@ -3,6 +3,7 @@ import pandas as pd
 from re import sub
 import logging
 from .config import FABGalConfig
+from .helpers import choose_threshold
 
 
 
@@ -37,9 +38,15 @@ def calculate_CTF(cfg: FABGalConfig):
 
     # Filter nuclei below area threshold
     nucleidf_pxarea = pd.merge(nucleidf,bgaldf[['File','PxArea']],how='inner',on='File')
-    nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
 
-    nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+    ## If cfg.nuclei_thr is None, then choose interactively the nuclei thr
+    if cfg.nuclei_thr is None:
+        cfg.nuclei_thr = choose_threshold(nucleidf_pxarea)
+        nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
+        nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+    else:
+        nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
+        nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
 
     # Count nuclei per image file 
     nucleitot = nucleidf_filt['File'].value_counts()
