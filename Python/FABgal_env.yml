@@ -11,6 +11,8 @@ dependencies:
   - pandas
   - scikit-image
   - edt
+  - matplotlib
+  - seaborn
   - biapy==3.6.8
   - pip:
       - bioio==3.0.0
