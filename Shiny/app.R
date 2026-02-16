@@ -12,7 +12,11 @@ ij_jar_path <- 'ij/ij.jar'
 if (file.exists(ij_jar_path)) {
   .jaddClassPath(ij_jar_path)
 } else {
-  warning("ij.jar not found at:", ij_jar_path, "\nBackground subtraction may not work.")
+  warning(
+    "ij.jar not found at:",
+    ij_jar_path,
+    "\nBackground subtraction may not work."
+  )
 }
 
 # Source functions
@@ -33,8 +37,8 @@ ui <- fluidPage(
             align = "rigth",
             height = 80
           ),
-          href="https://github.com/antotartier/FAB-gal",
-          target="_blank"
+          href = "https://github.com/antotartier/FAB-gal",
+          target = "_blank"
         )
       ),
       column(
@@ -52,14 +56,14 @@ ui <- fluidPage(
         width = 3,
         a(
           img(
-          src = "Logo_gencanage.jpeg",
-          align = "rigth",
-          height = 80
+            src = "Logo_gencanage.jpeg",
+            align = "rigth",
+            height = 80
           ),
-          href="https://github.com/GenCanAgeLab",
-          target="_blank"
+          href = "https://github.com/GenCanAgeLab",
+          target = "_blank"
         )
-        )
+      )
     )
   ),
   ## SidebarPanel ----
@@ -165,7 +169,7 @@ ui <- fluidPage(
           actionButton('getbmfi', 'Get')
         )
       ),
-      checkboxInput("saven","Save nuclei segmentation",value = F),
+      checkboxInput("saven", "Save nuclei segmentation", value = F),
       textOutput("outdirtext"),
       shinyDirButton(
         id = 'outdir',
@@ -216,7 +220,13 @@ ui <- fluidPage(
       fluidRow(
         actionButton('run', "Measure current", class = "btn-primary"),
         actionButton('run.all', "Run for all images", class = "btn-primary"),
-        actionButton("help", "Click Here To Learn More", class = "btn btn-info")
+        a(
+          "Click Here To Learn More",
+          href = "https://github.com/antotartier/FAB-gal/wiki",
+          target = "_blank",
+          class = "btn btn-info",
+          icon = icon("info-circle")
+        )
       )
     ),
     ### Images and sliders ----
@@ -311,11 +321,12 @@ ui <- fluidPage(
     style = "text-align: center;",
     a(
       img(
-      src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
-      align = "rigth",
-      height = 80
+        src = "https://www.uniovi.es/documents/39158/11ff14cf-90c5-892e-473f-829945ed1733",
+        align = "rigth",
+        height = 80
       ),
-      href="https://www.uniovi.es/"
+      href = "https://www.uniovi.es/",
+      target = "_blank"
     ),
     a(
       img(
@@ -323,7 +334,8 @@ ui <- fluidPage(
         align = "rigth",
         height = 80
       ),
-      href="https://ispa-finba.es/"
+      href = "https://ispa-finba.es/",
+      target = "_blank"
     ),
     a(
       img(
@@ -331,7 +343,8 @@ ui <- fluidPage(
         align = "rigth",
         height = 80
       ),
-      href="https://www.unioviedo.es/IUOPA/"
+      href = "https://www.unioviedo.es/IUOPA/",
+      target = "_blank"
     ),
     a(
       img(
@@ -339,10 +352,11 @@ ui <- fluidPage(
         align = "rigth",
         height = 80
       ),
-      href="https://www.aei.gob.es/"
+      href = "https://www.aei.gob.es/",
+      target = "_blank"
     )
   ),
-  
+
   ## CSS Styling ----
   tags$head(
     tags$style(
@@ -361,13 +375,23 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   ## Directory handling ----
 
-  roots <- c("Examples" = './Examples', 'Home' = fs::path_home(), getVolumes()())
+  roots <- c(
+    "Examples" = './Examples',
+    'Home' = fs::path_home(),
+    getVolumes()()
+  )
   # roots <- getVolumes()()
-  
+
   ### Input directory ----
   ## Client connection for file system
-  shinyDirChoose(input, 'dir', roots = roots, session = session,defaultRoot = "Home")
-  
+  shinyDirChoose(
+    input,
+    'dir',
+    roots = roots,
+    session = session,
+    defaultRoot = "Home"
+  )
+
   ## Handeling selected dir
   ## It also prevent updating if the browse dialog is cancelled
   current_mydir <- reactiveVal(NULL)
@@ -381,7 +405,7 @@ server <- function(input, output, session) {
     }
   })
   mydir <- reactive({
-    validate(need(current_mydir(),"Please select a folder"))
+    validate(need(current_mydir(), "Please select a folder"))
     current_mydir()
   })
 
@@ -411,10 +435,10 @@ server <- function(input, output, session) {
     )
   })
 
-  ## Manage selected image 
+  ## Manage selected image
   # a reactiveVal is used to allow reset it when open a folder)
   imgpath <- reactiveVal(NULL)
-  
+
   observeEvent(input$imgpath, {
     imgpath(input$imgpath)
   })
@@ -429,39 +453,42 @@ server <- function(input, output, session) {
     updateTextInput(session, 'pxarea', value = "")
     outdir(mydir()) # Set output dir to current dir
   })
-  
+
   ### Output directory ----
-  shinyDirChoose(input, 'outdir', roots = roots, session = session, 
-                 defaultRoot = "Home")
-  
+  shinyDirChoose(
+    input,
+    'outdir',
+    roots = roots,
+    session = session,
+    defaultRoot = "Home"
+  )
+
   # A reactiveVal is used to allow setting it by different means
   outdir <- reactiveVal(NULL)
   observe({
     outdir(parseDirPath(roots, input$outdir))
   })
   # Notify output dir when save nuclei is enabled
-  observeEvent(input$saven,{
+  observeEvent(input$saven, {
     req(outdir())
-    if (input$saven == TRUE){
-      showNotification("Output directory will be:",outdir(),type="message")
+    if (input$saven == TRUE) {
+      showNotification("Output directory will be:", outdir(), type = "message")
     }
   })
-  
-  observeEvent(outdir(),{
-    if (input$saven == TRUE){
-      showNotification("Output directory will be:",outdir(),type="message")
+
+  observeEvent(outdir(), {
+    if (input$saven == TRUE) {
+      showNotification("Output directory will be:", outdir(), type = "message")
     }
   })
-  
-  
-  
+
   ## Image loading ----
 
   ### Read image ----
   valid_img <- reactive({
-    validate(need(mydir(),"Please select a folder"))
-    validate(need(imgpath(),"Please select an image"))
-    
+    validate(need(mydir(), "Please select a folder"))
+    validate(need(imgpath(), "Please select an image"))
+
     # Read image
     imgobj <- tryCatch(
       {
@@ -475,7 +502,9 @@ server <- function(input, output, session) {
         return(NULL)
       }
     )
-    if (is.null(imgobj)){return(NULL)}
+    if (is.null(imgobj)) {
+      return(NULL)
+    }
     if (length(dim(imgobj)) > 3) {
       showNotification(
         "Image with more than 3 dimesions. Only images with XYC dimensions are supported",
@@ -495,13 +524,12 @@ server <- function(input, output, session) {
     imgobj
   })
 
-
   ### Number of channels ----
   nc <- reactive({
     req(valid_img())
     coreMetadata(valid_img())$sizeC
   })
-  
+
   ### Image bitdepth ----
   img_bitdepth <- reactive({
     req(valid_img())
@@ -509,17 +537,17 @@ server <- function(input, output, session) {
   })
 
   ### Valid image actions ----
-  
+
   # Logic to update channels only when the first image is open
   # or when the image has less channels that currently set
   updatechan <- reactiveVal(TRUE)
-  
-  observeEvent(valid_img(),{
+
+  observeEvent(valid_img(), {
     req(valid_img(), nc())
     # Actual channel selection (it there is one)
     n <- input$nchan
     s <- input$schan
-    maxchan <- max(as.numeric(c(n,s, 1)), na.rm = T)
+    maxchan <- max(as.numeric(c(n, s, 1)), na.rm = T)
     # update selectize inputs if required
     if (updatechan() == TRUE | nc() < maxchan) {
       if (nc() >= 2) {
@@ -532,17 +560,16 @@ server <- function(input, output, session) {
       updatechan(FALSE)
     }
     # If image has only when channel, set it to sabgal
-    if (nc() == 1){
+    if (nc() == 1) {
       n <- ""
       s <- 1
     }
-    updateSelectizeInput(session,'nchan',choices = 1:nc(),selected = n)
-    updateSelectizeInput(session,'schan',choices = 1:nc(),selected = s)
+    updateSelectizeInput(session, 'nchan', choices = 1:nc(), selected = n)
+    updateSelectizeInput(session, 'schan', choices = 1:nc(), selected = s)
     # Reset zoom when loading a new image
     crop_region(NULL)
   })
 
-  
   ### Pixel physical size ----
 
   px_area <- reactiveVal(NA)
@@ -564,19 +591,19 @@ server <- function(input, output, session) {
     if (is.null(pxa)) {
       px_area(NA)
       return(NULL)
-      }
-    if (pxa$pxa == ""){
-      showNotification(pxa$error,type='error')
+    }
+    if (pxa$pxa == "") {
+      showNotification(pxa$error, type = 'error')
       px_area(NA)
     } else {
-      if (!is.null(pxa$error)){
-        showNotification(pxa$error,type='warning')
+      if (!is.null(pxa$error)) {
+        showNotification(pxa$error, type = 'warning')
       }
       px_area(pxa$pxa)
       updateTextInput(session, 'pxarea', value = pxa$pxa)
     }
   })
-  
+
   #### Observer for get button
   observe({
     if (grepl('[^0-9\\.]', input$pxarea)) {
@@ -596,7 +623,7 @@ server <- function(input, output, session) {
   bmfi <- reactiveVal(NA)
   ### Observer for text input
   observeEvent(input$getbmfi, {
-    req(sabgal(),sabgal_stats())
+    req(sabgal(), sabgal_stats())
     bmfi <- sabgal_stats()$mfi
     if (!is.null(bmfi)) {
       updateTextInput(session, 'bmfi', value = bmfi)
@@ -616,9 +643,13 @@ server <- function(input, output, session) {
     }
   })
 
-  
-  observe({print("pxarea");print(input$pxarea);print("bmfi");print(input$bmfi)})
-  
+  observe({
+    print("pxarea")
+    print(input$pxarea)
+    print("bmfi")
+    print(input$bmfi)
+  })
+
   ## Nuclei  processing ----
 
   ### Nuclei Preprocessing ----
@@ -648,14 +679,20 @@ server <- function(input, output, session) {
     # req(nuclei_b())
     req(nuclei())
     if (input$sback == TRUE) {
-      tryCatch({
-        # subtract_background(nuclei_b(), input$radius)
-        subtract_background(nuclei(), input$radius)
-      }, error = function(e) {
-        showNotification(paste("Error in background subtraction:", e$message), type = "error")
-        # nuclei_b()
-        nuclei()
-      })
+      tryCatch(
+        {
+          # subtract_background(nuclei_b(), input$radius)
+          subtract_background(nuclei(), input$radius)
+        },
+        error = function(e) {
+          showNotification(
+            paste("Error in background subtraction:", e$message),
+            type = "error"
+          )
+          # nuclei_b()
+          nuclei()
+        }
+      )
     } else {
       # nuclei_b()
       nuclei()
@@ -681,9 +718,8 @@ server <- function(input, output, session) {
     updateSliderInput(session, 'thres.n', value = c(0, img_bitdepth() - 1))
   })
 
-
   ### Nuclei Segmentatiobn ----
- 
+
   # Handle count and filter status
   apply_th <- reactiveVal(FALSE)
 
@@ -713,7 +749,7 @@ server <- function(input, output, session) {
     apply_th(TRUE)
     # Set slider area
     nmax <- as.integer(max(n_objects))
-    updateSliderInput(session, 'nsize', value=c(50,nmax),max = nmax)
+    updateSliderInput(session, 'nsize', value = c(50, nmax), max = nmax)
     nuclei_seg(n_seg)
     nuclei_objects(n_objects)
   })
@@ -770,7 +806,7 @@ server <- function(input, output, session) {
   # Create sabgal image when selecting a channel
   sabgal <- reactive({
     req(valid_img())
-    validate(need(input$schan,"Please select a channel"))
+    validate(need(input$schan, "Please select a channel"))
     tryCatch(
       get_channel(valid_img(), input$schan),
       error = function(e) {
@@ -828,7 +864,7 @@ server <- function(input, output, session) {
   # Observer for "Measure" button
   observeEvent(input$run, {
     req(imgpath(), input$schan)
-    checkrun(input,img_bitdepth())
+    checkrun(input, img_bitdepth())
     withProgress(
       {
         # Process image
@@ -857,42 +893,38 @@ server <- function(input, output, session) {
       return()
     }
     # Process all images
-    checkrun(input,img_bitdepth())
+    checkrun(input, img_bitdepth())
     image_files <- file.path(mydir(), filtered_files())
     # Process all images
-    batch_results(process_all_images(image_files, input,outdir()))
-  })
-
-  # Observer for "Click Here To Learn More"
-  observeEvent(input$help, {
-    browseURL("https://github.com/antotartier/FAB-gal/wiki")
+    batch_results(process_all_images(image_files, input, outdir()))
   })
 
   ## Outputs ----
 
   ### Nuclei Plots ----
-  
+
   # Reactive holding the type of nuclei display
   nuclei2disp <- reactive({
     req(nuclei())
     if (apply_th() == TRUE) {
       req(nuclei_filtered())
-      return(colorLabels(nuclei_filtered()))}
+      return(colorLabels(nuclei_filtered()))
+    }
     req(img_bitdepth())
     if (all(input$thres.n == c(0, img_bitdepth() - 1))) {
       req(nuclei_bgs())
       return(normalize(
-        nuclei_bgs(), 
+        nuclei_bgs(),
         inputRange = c(0, img_bitdepth() - 1)
-        ))
+      ))
     }
     req(nuclei_th)
     nuclei_th()
   })
-  
+
   # Reactive to store the crop region (coordinates only)
   crop_region <- reactiveVal(NULL)
-  
+
   # Reactive expressions to compute displayed images based on crop region
   nplot_displayed <- reactive({
     req(nuclei2disp())
@@ -908,28 +940,31 @@ server <- function(input, output, session) {
     }
     img
   })
-  
+
   # Apply zoom when brush is drawn on nuclei plot
   observeEvent(input$nplot_brush, {
     req(nplot_displayed())
-    region <- get_crop_region_from_brush(nplot_displayed(), input$nplot_brush, crop_region())
+    region <- get_crop_region_from_brush(
+      nplot_displayed(),
+      input$nplot_brush,
+      crop_region()
+    )
     if (!is.null(region)) {
       crop_region(region)
     }
   })
-  
+
   # Reset zoom for nuclei
   observeEvent(input$reset.zoom.n, {
     crop_region(NULL)
   })
-  
-  
+
   output$nplot <- renderPlot({
     display(nplot_displayed(), method = 'raster')
   })
 
   ### SABGAL Plot ----
-  
+
   # Reactive holding the sabgal image to display
   sabgal2disp <- reactive({
     req(img_bitdepth())
@@ -941,31 +976,35 @@ server <- function(input, output, session) {
       sabgal_th()
     }
   })
-  
+
   # Reactive holding the cropped sabgal image to display
   splot_displayed <- reactive({
     img <- sabgal2disp()
     region <- crop_region()
     if (!is.null(region)) {
       img <- img[region$xmin:region$xmax, region$ymin:region$ymax]
-      }
+    }
     img
   })
-  
+
   # Apply zoom when brush is drawn on sabgal plot
   observeEvent(input$splot_brush, {
     req(splot_displayed())
-    region <- get_crop_region_from_brush(splot_displayed(), input$splot_brush, crop_region())
+    region <- get_crop_region_from_brush(
+      splot_displayed(),
+      input$splot_brush,
+      crop_region()
+    )
     if (!is.null(region)) {
       crop_region(region)
     }
   })
-  
+
   # Reset zoom for sabgal
   observeEvent(input$reset.zoom.s, {
     crop_region(NULL)
   })
-  
+
   output$splot <- renderPlot({
     display(splot_displayed(), method = 'raster')
   })
@@ -985,8 +1024,8 @@ server <- function(input, output, session) {
   output$stats.s <- renderPrint({
     req(sabgal_stats())
     sabst <- sabgal_stats()
-    cat(sprintf("MFI = %.2f  Sel_Area = %.2f%%",sabst$mfi,sabst$perA))
-    })
+    cat(sprintf("MFI = %.2f  Sel_Area = %.2f%%", sabst$mfi, sabst$perA))
+  })
 
   ### Results table ----
   output$results_table <- renderTable({

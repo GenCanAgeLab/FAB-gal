@@ -1,4 +1,4 @@
-name: FABGal-env
+name: FABgal-env
 channels:
   - conda-forge
   - defaults
@@ -10,8 +10,9 @@ dependencies:
   - numpy
   - pandas
   - scikit-image
+  - edt
+  - biapy==3.6.8
   - pip:
-      - biapy==3.6.8
       - bioio==3.0.0
       - bioio-base==3.0.0
       - bioio-ome-tiff==1.4.0
