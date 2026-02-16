@@ -9,6 +9,15 @@ from pathlib import Path
 import logging
 from bioio.writers import OmeTiffWriter
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Safely check if we are in Jupyter to handle screen clearing
+try:
+    from IPython.display import clear_output
+    is_jupyter = True
+except ImportError:
+    is_jupyter = False
+
 #### Log options ####
 
 import logging
@@ -155,7 +164,7 @@ def subtract_background(image, radius : int) -> NDArray[np.generic]:
 
 def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out_path: str):
     """
-    Docstring para process_biapy_input
+    process_biapy_input
     """
     # Load nuclei channel
     try:
@@ -177,7 +186,7 @@ def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out
 
 def load_input(input_folder: str) -> List:
     """
-    Docstring para load_input
+    Load_input
     """
     # Check input folder
     try:
@@ -200,3 +209,44 @@ def load_input(input_folder: str) -> List:
         if inf.is_file() and inf.suffix.lower() not in allowed_ext:
             raise ValueError(f"Invalid file found: {inf.name}. Please ensure all items in input folder are .tif or .tiff.")
     return myfiles
+
+
+def choose_threshold(df) -> float:
+    """
+    Choose threshold
+    """
+
+    df['area_um'] = df.area * df.PxArea
+    sns.kdeplot(data=df, x="area_um", fill=True)
+    plt.show(block=False)
+
+    while True:
+        user_input = input(f"\nEnter nuclei threshold (in um): ")
+                
+        try:
+            thr = float(user_input)
+            
+            # If Jupyter, clear output
+            if is_jupyter:
+                clear_output(wait=True)
+            
+            # Close prior plots
+            plt.close('all')
+            
+            # 3. Create the new plot
+            sns.kdeplot(data=df, x="area_um", fill=True)
+            plt.axvline(thr, color='red', linestyle='--', label=f'Threshold: {thr}')
+            plt.title(f"Evaluating Threshold: {thr}")
+            plt.legend()
+            
+            # Show plot
+            plt.show(block=False)
+            
+            # 5. Get confirmation
+            confirm = input("Keep this threshold? (y/n): ").lower()
+            if confirm == 'y':
+                plt.close('all')
+                return thr
+                
+        except ValueError:
+            print("Error: Please enter a valid number.")
