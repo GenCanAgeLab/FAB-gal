@@ -75,7 +75,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
     pxareaunit = "µm^2"
     area_conv = 1 # Conversion factor for pixel area (Defaults to 1 for µm^2)
 
-    if pxInfo and pxunit is not "µm":
+    if pxInfo and pxunit != "µm":
         if pxunit == "mm":
             pxarea = pxarea * 10^6
         elif pxunit == "cm":
