@@ -29,12 +29,16 @@ def calculate_CTF(cfg: FABGalConfig):
     # Load BGal and nuclei stats
     results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"
     biapystatsfile = results_dir / f"{cfg.experiment_name}_BiaPy_results.tsv"
+    bgalquantfile = results_dir / f"{cfg.experiment_name}_Raw_Bgal_results.tsv"
 
     if not biapystatsfile.exists():
         raise FileNotFoundError("\nERROR: BiaPy output file cannot be found. Please check that BiaPy has been executed.")
+    
+    if not bgalquantfile.exists():
+        raise FileNotFoundError("\nERROR: B-gal output file cannot be found. Please check that B-gal quantification has been executed.")
 
     nucleidf = pd.read_table(biapystatsfile)
-    bgaldf = pd.read_table(results_dir / f"{cfg.experiment_name}_Raw_BGal_results.tsv")
+    bgaldf = pd.read_table(bgalquantfile)
 
     # Filter nuclei below area threshold
     nucleidf_pxarea = pd.merge(nucleidf,bgaldf[['File','PxArea']],how='inner',on='File')

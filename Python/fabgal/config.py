@@ -15,6 +15,9 @@ class FABGalConfig:
         **apply_subtract_background** (`bool`): If `True`, subtract background algorythm will be applied to input images before BiaPy runs.
 
         **run_biapy** (`bool`): If `True`, BiaPy will be run to count nuclei in the input images. Can be set as `False` if the user wants to perform B-Gal quantification and calculate CTF value with BiaPy values from a previous run. Be advised that, unless `nuclei_ch` is `None`,  FAB-gal will try to compute CTF values, and if there are no BiaPy results, it will raise an error.
+
+        **CTF_only** (`bool`): If `True`, only the CTF analysis per sample (and individuals) will be performed, using prior B-gal and nuclei quantification data. Defaults to `False`, but can be set `True` if the user wants to change `nuclei_thr` or `img_to_ind` parameters.
+
     
     ### File parameters:
         **input_folder** (`str`): Path to folder containing input images in `TIFF` format.
@@ -57,6 +60,7 @@ class FABGalConfig:
     # Run parameters
     delete_intermediate_files: bool
     apply_subtract_background: bool
+    CTF_only: bool
     run_biapy: bool
 
     #File parameters
