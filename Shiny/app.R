@@ -361,7 +361,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   ## Directory handling ----
 
-  roots <- c("Examples" = './Examples', 'Home' = fs::path_home(), getVolumes()())
+  roots <- c("Examples" = '../Example_images', 'Home' = fs::path_home(), getVolumes()())
   # roots <- getVolumes()()
   
   ### Input directory ----
