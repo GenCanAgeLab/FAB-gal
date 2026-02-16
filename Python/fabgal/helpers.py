@@ -40,7 +40,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
             Defaults to 254 to exclude burned (saturated) pixels at 255 
             where real values are unknown.
         pxarea (float): Pixel area of the image. Defaults to None, where the info will be extracted from the image or, if no info is found, defaults to 1.
-        pxunit (str): Pixel area units.
+        pxunit (str): Units of pixel lenght/width.
 
 
     Returns:
@@ -70,21 +70,18 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
             print("\nWARNING: Image does not have pixel physical sizes. No calculations per area will be performed.", end="\r", flush=True)
             pxInfo = False
     
-    ##### Define pixel area units and establish area conversion factor #####
+    ##### Pixel area conversion if not um2 #####
 
-    pxareaunit = str()
+    pxareaunit = "µm^2"
     area_conv = 1 # Conversion factor for pixel area (Defaults to 1 for µm^2)
 
-    if pxunit == "µm":
-        pxareaunit = "µm^2"
-    elif pxunit == "mm":
-        pxareaunit = "mm^2"
-        area_conv = 10^6       
-    elif pxunit == "cm":
-        pxareaunit = "cm^2"
-        area_conv = 10^8
-    else:
-        pxareaunit = None
+    if pxInfo and pxunit is not "µm":
+        if pxunit == "mm":
+            pxarea = pxarea * 10^6
+        elif pxunit == "cm":
+            pxarea = pxarea * 10^8
+        else:
+            pxareaunit = None
     
     ##### Extract image data for the specific channel #####
 
