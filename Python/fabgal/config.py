@@ -51,7 +51,7 @@ class FABGalConfig:
 
         **keep_images** (`bool`): If `True`, masks from BiaPy nuclei quantification will be kept in the results folder.
 
-        **nuclei_thr** (`float`): Area value for a predicted nuclei to be considered as such. Has to be in the same units as the `pixel_area` the user has input or the image metadata contains.
+        **nuclei_thr** (`float`): Area value for a predicted nuclei to be considered as such. Has to be in the same units as the `pixel_area` the user has input or the image metadata contains. If none, it executes a function to explore nuclei area distribution and inputing a threshold value based on it.
     """
 
     # Run parameters
@@ -83,4 +83,4 @@ class FABGalConfig:
     run_id: int      
     gpu: str
     keep_images: bool
-    nuclei_thr: float
+    nuclei_thr: float | None
