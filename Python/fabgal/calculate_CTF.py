@@ -40,7 +40,7 @@ def calculate_CTF(cfg: FABGalConfig):
         
         # BiaPy results (prior or newly generated)
         if cfg.Biapy_run is not None:
-            biapystatsfile = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.Bgal_run / "BiaPy_results.tsv"
+            biapystatsfile = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.Biapy_run / "BiaPy_results.tsv"
         else:
             biapystatsfile = results_dir / "BiaPy_results.tsv"
     else:
@@ -113,7 +113,17 @@ def calculate_CTF(cfg: FABGalConfig):
             img_ind_df["File"] = img_ind_df["File"].str.replace(r"(?i)\.tiff?$","",regex=True)
             resdf = pd.merge(resdf,img_ind_df,how='outer',on='File')
 
-            CTFind = resdf.groupby(['Individual']).sum(numeric_only = True)
+            CTFind = resdf.groupby(['Individual']).agg(
+                NpxPos = ("NpxPos","sum"),
+                NpxTot = ("NpxTot","sum"),
+                AreaPos = ("AreaPos","sum"),
+                AreaTot = ("AreaTot","sum"),
+                PxArea = ("PxArea","first"), # All images from the same ind. must have the same PixArea
+                Bgal_RawIntDen = ("Bgal_RawIntDen","sum"),
+                Mean_Intens = ("Mean_Intens","mean"),
+                NumNucl = ("NumNucl","sum"),
+                NumImages=("File", "count")
+            )
      
             CTFind['bgMF'] = BGal_backgr
             CTFind['CTFnucl'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NumNucl
