@@ -18,25 +18,18 @@ logger = logging.getLogger(__name__)
 
 def run_biapy(cfg: FABGalConfig):
     """
-    Run BiaPy analysis to count nuclei with stated parameters, processes output, and generates final .
+    Run BiaPy analysis to count nuclei with stated parameters, processes output, and generates summary count info for all samples.
 
     Args:
         cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
     """
     # Results dir for BiaPy
-    results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"
-    biapy_result_dir = results_dir / f"biapy_output_run{cfg.run_id}"
-    biapy_log = results_dir / f"biapy_{cfg.experiment_name}_run{cfg.run_id}.log"
-
-    # If there is a previous execution of BiaPy with the same name, delete previous subtracted images
-    sub_images_out = results_dir / f"subtracted_images_run{cfg.run_id}"
-    if sub_images_out.exists():
-        shutil.rmtree(sub_images_out)
+    results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.run_name
+    
+    biapy_result_dir = results_dir / "BiaPy_output"
+    biapy_log = results_dir / f"biapy_runInfo.log"
 
     ########### Create and run the BiaPy job ###########
-
-    # Start message
-    logger.info("Starting BiaPy nuclei quantification...")
 
     # Catch stdout and stderr from BiaPy and redirect it
     with biapy_log.open("w") as f, redirect_stdout(f), redirect_stderr(f):
@@ -44,23 +37,19 @@ def run_biapy(cfg: FABGalConfig):
         biapy = BiaPy(cfg.config_file,
                     result_dir = biapy_result_dir,
                     name = cfg.experiment_name,
-                    run_id = cfg.run_id,
+                    run_id = 1,
                     gpu = cfg.gpu)
     
     
         biapy.run_job()
     
-    # Final message
-    logger.info("Finished BiaPy quantification")
-
-
     ########### Process BiaPy output ###########
     
     ## Define BiaPy output images folder
-    biapyout = biapy_result_dir / cfg.experiment_name / "results" / f"{cfg.experiment_name}_{cfg.run_id}" / "per_image_instances"
+    biapyout = biapy_result_dir / cfg.experiment_name / "results" / f"{cfg.experiment_name}_1" / "per_image_instances"
 
     ## Define Nuclei stats output file
-    biapystatsfile = results_dir / f"{cfg.experiment_name}_BiaPy_results.tsv"
+    biapystatsfile = results_dir / "BiaPy_results.tsv"
 
     #### Process nuclei stats ####
 
@@ -86,7 +75,7 @@ def run_biapy(cfg: FABGalConfig):
     
     #### Process output mask images ####
 
-    if cfg.keep_images:
+    if cfg.keep_masks:
         for inf in biapyout.glob("*.tif"):
             img = io.imread(inf)
             img = label2rgb(img)*255
@@ -95,6 +84,8 @@ def run_biapy(cfg: FABGalConfig):
             inf.unlink()
     
     #### Save subtracted images from BiaPy input (if generated) ####
+
+    sub_images_out = results_dir / f"subtracted_images"
 
     if cfg.apply_subtract_background:
         Path("biapy_input").replace(sub_images_out)
@@ -108,9 +99,8 @@ def run_biapy(cfg: FABGalConfig):
     biapy_config = Path(biapy_result_dir / cfg.experiment_name / "config_files")
 
     for file in biapy_config.iterdir():
-        file.replace(results_dir / "BiaPy_config.yaml")
+        file.replace(biapy_result_dir / "BiaPy_config.yaml")
 
     ### Delete extra files not used in the analysis ###
 
-    if cfg.delete_intermediate_files:
-        shutil.rmtree(biapy_result_dir / cfg.experiment_name)
+    shutil.rmtree(biapy_result_dir / cfg.experiment_name)

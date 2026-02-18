@@ -23,19 +23,46 @@ def calculate_CTF(cfg: FABGalConfig):
         cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
     """
 
-    # Start message
-    logger.info("Starting data processing and CTF calculation...")
+    ########## Load BGal and nuclei stats ##########
 
-    # Load BGal and nuclei stats
-    results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"
-    biapystatsfile = results_dir / f"{cfg.experiment_name}_BiaPy_results.tsv"
-    bgalquantfile = results_dir / f"{cfg.experiment_name}_Raw_Bgal_results.tsv"
+    ### Define result dir ###
+
+    results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.run_name
+
+    ### Define B-gal and BiaPy results file ###
+
+    if cfg.is_rerun:
+        # B-gal results (prior or newly generated)
+        if cfg.Bgal_run is not None:
+            bgalquantfile = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.Bgal_run / "Raw_Bgal_results.tsv"
+        else:
+            bgalquantfile = results_dir / "Raw_Bgal_results.tsv"
+        
+        # BiaPy results (prior or newly generated)
+        if cfg.Biapy_run is not None:
+            biapystatsfile = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.Bgal_run / "BiaPy_results.tsv"
+        else:
+            biapystatsfile = results_dir / "BiaPy_results.tsv"
+    else:
+        # Newly generated results for both if is_rerun is false
+        bgalquantfile = results_dir / "Raw_Bgal_results.tsv"
+        biapystatsfile = results_dir / "BiaPy_results.tsv"
+
+    ### Check if B-gal and BiaPy results file exist ###
+
+    if not bgalquantfile.exists():
+        if cfg.is_rerun and cfg.Bgal_run is not None:
+            raise FileNotFoundError(f"\nERROR: Run {cfg.Bgal_run} cannot be found or B-gal output file is not located in it. Please review run {cfg.Bgal_run} results and check FABgal config.")
+        else:
+            raise FileNotFoundError("\nERROR: Cannot find newly generated B-gal output file. Please check that B-gal quantification ended correctly.")
 
     if not biapystatsfile.exists():
-        raise FileNotFoundError("\nERROR: BiaPy output file cannot be found. Please check that BiaPy has been executed.")
-    
-    if not bgalquantfile.exists():
-        raise FileNotFoundError("\nERROR: B-gal output file cannot be found. Please check that B-gal quantification has been executed.")
+        if cfg.is_rerun and cfg.Biapy_run is not None:
+            raise FileNotFoundError(f"\nERROR: Run {cfg.Biapy_run} cannot be found or BiaPy output file is not located in it. Please review run {cfg.Biapy_run} results and check FABgal config.")
+        else:
+            raise FileNotFoundError("\nERROR: Cannot find newly generated BiaPy output file. Please check that BiaPy ended correctly.")
+
+    ### Load B-gal and BiaPy results ###
 
     nucleidf = pd.read_table(biapystatsfile)
     bgaldf = pd.read_table(bgalquantfile)
@@ -78,7 +105,7 @@ def calculate_CTF(cfg: FABGalConfig):
         CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
         CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
 
-        CTFimg.to_csv(results_dir / f"{cfg.experiment_name}_results_perimage.tsv", sep="\t")
+        CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t")
 
         # Load individual info (if present)
         if cfg.img_to_ind is not None:
@@ -93,7 +120,4 @@ def calculate_CTF(cfg: FABGalConfig):
             CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
             CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
 
-            CTFind.to_csv(results_dir / f"{cfg.experiment_name}_results_perindividual.tsv")
-    
-    # End message
-    logger.info("Finished data processing")
+            CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t")

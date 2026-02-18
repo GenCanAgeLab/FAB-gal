@@ -3,4 +3,4 @@ biapy_input/
 biapy_output/
 .Rproj.user
 Shiny/.Rhistory
-Results_Experiment1/
+Results_*/

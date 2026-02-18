@@ -1,17 +1,16 @@
 from pathlib import Path
-from re import sub
-from bioio import BioImage
-from bioio_base.exceptions import UnsupportedFileFormatError
-from bioio.writers import OmeTiffWriter
 import logging
 import warnings
+from bioio import BioImage
+from bioio_base.exceptions import UnsupportedFileFormatError
 from dataclasses import asdict
 import yaml
 
-from .helpers import calculate_bgal,generate_biapy_input,load_input
+from .run_Bgal import run_Bgal
 from .run_biapy import run_biapy
 from .calculate_CTF import calculate_CTF
 from .config import FABGalConfig
+from .helpers import load_input,generate_biapy_input
 
 #### Log options ####
 
@@ -45,8 +44,20 @@ def run_fabgal(cfg: FABGalConfig):
     """
     ####### Check config #######
 
-    if cfg.run_biapy and cfg.CTF_only:
-        raise Exception("ERROR: Exclusive parameters run_biapy and CTF_only are both set as True. Please check FABgal config.")
+    if cfg.Biapy_run and cfg.nuclei_ch:
+        raise Exception("ERROR: Entering BiaPy prior info in BiaPy_run, but nuclei_ch is None. Please check FABgal config.")
+    
+    if not cfg.is_rerun:
+        if cfg.Bgal_run is not None:
+            raise Exception("ERROR: Entering B-gal prior info in Bgal_run, but is_rerun is False. Please check FABgal config.")
+        if cfg.Biapy_run is not None:
+            raise Exception("ERROR: Entering BiaPy prior info in Bgal_run, but is_rerun is False. Please check FABgal config.")
+
+
+    ####### Create results directory #######
+
+    results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.run_name
+    results_dir.mkdir(exist_ok = True, parents= True)
 
     ####### Load images #######
     
@@ -54,101 +65,83 @@ def run_fabgal(cfg: FABGalConfig):
 
     ####### Iterate over files #######
 
-    # Create results directory
-    results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}"
-    results_dir.mkdir(exist_ok = True, parents= True)
+    ####### Run B-gal quantification ######
 
-    ####### Start B-gal quantification #######
+    if cfg.is_rerun and cfg.Bgal_run is not None :
 
-    if not cfg.CTF_only:
+        # Skip B-gal quantification
+        logger.info(f"Using B-gal quantification values from run: {cfg.run_name}")
 
-        # Start B-Gal quantification message
-        logger.info("Starting B-Gal quantification...")
+        ####### If the user wants to run BiaPy again, we have to generate BiaPy input #######
 
-        # Create B-Gal results list
-        bres = {}
+        if not cfg.Biapy_run:
+            logger.info(f"Generating BiaPy input images")
 
-        # Start iteration
-        filenum = len(myfiles)
-        for i, inf in enumerate(myfiles, start=1):
+            # Create BiaPy input directory
+            biapy_input = Path("biapy_input")
+            biapy_input.mkdir(exist_ok=True)
 
-            print(f"Doing file {i} of {filenum}", end="\r", flush=True)
+            # Load input files
+            myfiles = load_input(cfg.input_folder)
 
-            ####### Open image #######
-            try:
-                img = BioImage(inf)
-            except UnsupportedFileFormatError as e:
-                raise UnsupportedFileFormatError("\nERROR: Image is not in TIFF format, convert it to TIFF using appropiate software (e.g. ImageJ)") from e
-            except Exception as e:
-                raise Exception(f"\nERROR: Could not open {inf.name}: {e}") from e
-                
-            ####### Generate input for BiaPy if needed #######
-            out_path = Path()
-            if cfg.nuclei_ch is not None and cfg.run_biapy:
+            # Iterate over files
+            for inf in myfiles:
 
-                # Create BiaPy input directory or check if it exists
-                biapy_input = Path("biapy_input")
-                biapy_input.mkdir(exist_ok=True)
+                # Open image
+                try:
+                    img = BioImage(inf)
+                except UnsupportedFileFormatError as e:
+                    raise UnsupportedFileFormatError("\nERROR: Image is not in TIFF format, convert it to TIFF using appropiate software (e.g. ImageJ)") from e
+                except Exception as e:
+                    raise Exception(f"\nERROR: Could not open {inf.name}: {e}") from e
 
                 # Define path for generating BiaPy input image
                 out_path = biapy_input / inf.name
                 
                 # Generate BiaPy input file
                 generate_biapy_input(img, cfg.nuclei_ch, cfg.apply_subtract_background, cfg.sbg_rad, out_path)
-
             
-            ####### Generate OME_metadata from image to load #######
+            logger.info(f"Done!")
 
-            # Get image parameters to generate metadata
-            shapes = [img.data.shape]
-            dtypes = [img.data.dtype]
-            dim_order = img.dims.order
-            channel_names = img.channel_names if hasattr(img, 'channel_names') else None
+        #######################################################################################
 
-            # Build_OME
-            ome_metadata_variable = OmeTiffWriter.build_ome(
-                shapes,
-                dtypes,
-                channel_names=[channel_names] if channel_names else None, # Needs to be a list of lists if provided
-                image_name=["img"],     # List of names
-                dimension_order=[dim_order] # List of strings
-            )
+    else:
+        # Start B-Gal quantification message
+        logger.info("Starting B-Gal quantification...")
 
-            pxunit = ome_metadata_variable.images[0].pixels.physical_size_x_unit.value
-
-            ####### Quantify B-Gal signal #######
-
-            bres[sub(r'(?i)\.tiff?$', '', inf.name)] = calculate_bgal(img,
-                                                                    cfg.bgal_ch,
-                                                                    cfg.bgal_th,
-                                                                    pxarea = cfg.pixel_area,
-                                                                    pxunit = pxunit)
-
-
-        ####### Output B-Gal calculations to file #######
-        BGalres = results_dir / f"{cfg.experiment_name}_Raw_BGal_results.tsv"
-
-        with BGalres.open('w') as bgal_f:
-
-            # Create file header
-            bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tPxArea\tPxAreaUnits\tBgal_RawIntDen\tMean_Intens\n")
-
-            # Write calculations to file       
-            for k, (npx, npxtot, areapos, areatot, pxarea, pxareaunit, RawIntDen,MeanIntens) in bres.items():
-                bgal_f.write(f"{k}\t{npx}\t{npxtot}\t{areapos}\t{areatot}\t{pxarea}\t{pxareaunit}\t{RawIntDen}\t{MeanIntens}\n")
+        run_Bgal(cfg)
 
         # End of B-Gal quantification message
         logger.info("Finished B-Gal quantification")
 
+
     ####### Run BiaPy nuclei count if specified #######
-    if not cfg.CTF_only:
-        if cfg.nuclei_ch is not None and cfg.run_biapy:
-            run_biapy(cfg)
+
+    if cfg.is_rerun and cfg.Biapy_run is not None:
+        pass # Skip BiaPy nuclei quantification (already run before)
+    elif cfg.nuclei_ch is None:
+        pass # Skip BiaPy nuclei quantification (no nuclei info)
+    else:
+
+        # Start message
+        logger.info("Starting BiaPy nuclei quantification...")
+
+        run_biapy(cfg)
+
+        # Final message
+        logger.info("Finished BiaPy quantification")
     
     ####### Calculate CTF #######
 
     if cfg.nuclei_ch is not None:
+
+        # Start message
+        logger.info("Starting data processing and CTF calculation...")
+
         calculate_CTF(cfg)
+
+        # End message
+        logger.info("Finished data processing")
     
     ####### Save config file #######
 

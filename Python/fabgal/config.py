@@ -10,9 +10,9 @@ class FABGalConfig:
     ## Variables:
 
     ### Run parameters:
-        **delete_intermediate_files** (`bool`): If `True`, intermediate files generate by BiaPy that are not processed by FAB-gal (`per_image`, `per_image_instances`) are deleted after BiaPy run.
-
         **apply_subtract_background** (`bool`): If `True`, subtract background algorythm will be applied to input images before BiaPy runs.
+
+        **run_name** (`str`): Name of run.
 
         **run_biapy** (`bool`): If `True`, BiaPy will be run to count nuclei in the input images. Can be set as `False` if the user wants to perform B-Gal quantification and calculate CTF value with BiaPy values from a previous run. Be advised that, unless `nuclei_ch` is `None`,  FAB-gal will try to compute CTF values, and if there are no BiaPy results, it will raise an error.
 
@@ -48,20 +48,21 @@ class FABGalConfig:
     ### BiaPy parameters
         **config_file** (`str`): Path to BiaPy YAML configuration file.
 
-        **run_id** (`int`): ID number of BiaPy run.
-
         **gpu** (`str`): GPU to use. Obtained from `nvidia-smi` command.
 
-        **keep_images** (`bool`): If `True`, masks from BiaPy nuclei quantification will be kept in the results folder.
+        **keep_masks** (`bool`): If `True`, masks from BiaPy nuclei quantification will be kept in the results folder.
 
         **nuclei_thr** (`float`): Area value for a predicted nuclei to be considered as such. Has to be in the same units as the `pixel_area` the user has input or the image metadata contains. If none, it executes a function to explore nuclei area distribution and inputing a threshold value based on it.
     """
 
     # Run parameters
-    delete_intermediate_files: bool
     apply_subtract_background: bool
-    CTF_only: bool
-    run_biapy: bool
+    run_name: str
+
+    # Re-run options
+    is_rerun: bool
+    Bgal_run: str | None
+    Biapy_run: str | None
 
     #File parameters
     input_folder: str
@@ -84,7 +85,6 @@ class FABGalConfig:
 
     # BiaPy parameters
     config_file: str
-    run_id: int      
     gpu: str
-    keep_images: bool
+    keep_masks: bool
     nuclei_thr: float | None
