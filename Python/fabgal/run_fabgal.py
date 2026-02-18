@@ -47,6 +47,11 @@ def run_fabgal(cfg: FABGalConfig):
     if cfg.Biapy_run and cfg.nuclei_ch:
         raise Exception("ERROR: Entering BiaPy prior info in BiaPy_run, but nuclei_ch is None. Please check FABgal config.")
     
+    if cfg.is_rerun:
+        if cfg.Bgal_run is None:
+            if cfg.Biapy_run is None:
+               raise Exception("ERROR: Current run is a rerun, but the run from which to get B-gal and/or BiaPy info is not indicated. Please check FABgal config.") 
+    
     if not cfg.is_rerun:
         if cfg.Bgal_run is not None:
             raise Exception("ERROR: Entering B-gal prior info in Bgal_run, but is_rerun is False. Please check FABgal config.")
@@ -70,7 +75,7 @@ def run_fabgal(cfg: FABGalConfig):
     if cfg.is_rerun and cfg.Bgal_run is not None :
 
         # Skip B-gal quantification
-        logger.info(f"Using B-gal quantification values from run: {cfg.run_name}")
+        logger.info(f"Using B-gal quantification values from run: {cfg.Bgal_run}")
 
         ####### If the user wants to run BiaPy again, we have to generate BiaPy input #######
 
@@ -96,10 +101,10 @@ def run_fabgal(cfg: FABGalConfig):
                     raise Exception(f"\nERROR: Could not open {inf.name}: {e}") from e
 
                 # Define path for generating BiaPy input image
-                out_path = biapy_input / inf.name
+                biapy_out_path = biapy_input / inf.name
                 
                 # Generate BiaPy input file
-                generate_biapy_input(img, cfg.nuclei_ch, cfg.apply_subtract_background, cfg.sbg_rad, out_path)
+                generate_biapy_input(img, cfg.nuclei_ch, cfg.apply_subtract_background, cfg.sbg_rad, biapy_out_path)
             
             logger.info(f"Done!")
 
@@ -118,9 +123,11 @@ def run_fabgal(cfg: FABGalConfig):
     ####### Run BiaPy nuclei count if specified #######
 
     if cfg.is_rerun and cfg.Biapy_run is not None:
-        pass # Skip BiaPy nuclei quantification (already run before)
+        # Skip B-gal quantification
+        logger.info(f"Using BiaPy nuclei quantification from run: {cfg.Biapy_run}")
     elif cfg.nuclei_ch is None:
-        pass # Skip BiaPy nuclei quantification (no nuclei info)
+        # Skip BiaPy nuclei quantification (no nuclei info)
+        logger.info("No nuclei channel, skipping nuclei quantification")
     else:
 
         # Start message

@@ -183,7 +183,20 @@ def subtract_background(image, radius : int) -> NDArray[np.generic]:
 
 def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out_path: str):
     """
-    process_biapy_input
+    Generates biapy input images.
+    
+    Parameters
+    ----------
+        img : BioImage
+            Input image loaded as BioImage object.
+        nuclei_ch : int
+            Number of the channel containing nuclei staining signal.
+        apply_sbg : bool
+            If `True`, applies subtract background algorithm before saving BiaPy input.
+        sbg_rad : int
+            Radius of the rolling ball for the subtract background algorithm, in pixels.
+        out_path : str
+            Path indicating the folder where BiaPy input images will be stored.
     """
     # Load nuclei channel
     try:

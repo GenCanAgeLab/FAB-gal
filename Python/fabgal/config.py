@@ -14,11 +14,13 @@ class FABGalConfig:
 
         **run_name** (`str`): Name of run.
 
-        **run_biapy** (`bool`): If `True`, BiaPy will be run to count nuclei in the input images. Can be set as `False` if the user wants to perform B-Gal quantification and calculate CTF value with BiaPy values from a previous run. Be advised that, unless `nuclei_ch` is `None`,  FAB-gal will try to compute CTF values, and if there are no BiaPy results, it will raise an error.
+    ### Run parameters:
+        **is_rerun** (`bool`): Set as `True` if the current run is a re-run of prior(s) run(s). If `True`, then the user needs to indicate which info (B-gal, BiaPy, or both) the program is reusing in `Bgal_run` and `Biapy_run`, respectively.
 
-        **CTF_only** (`bool`): If `True`, only the CTF analysis per sample (and individuals) will be performed, using prior B-gal and nuclei quantification data. Defaults to `False`, but can be set `True` if the user wants to change `nuclei_thr` or `img_to_ind` parameters.
+        **Bgal_run** (`str`): Name of the run from which to get B-gal results. If `None`, then B-gal quantification will be run again using current user configuration.
 
-    
+        **Biapy_run** (`str`): Name of the run from which to get BiaPy results. If `None`, then BiaPy nuclei count will be run again using current user configuration.
+
     ### File parameters:
         **input_folder** (`str`): Path to folder containing input images in `TIFF` format.
 
