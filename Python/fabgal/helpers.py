@@ -9,8 +9,10 @@ from pathlib import Path
 import logging
 from bioio.writers import OmeTiffWriter
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 # Safely check if we are in Jupyter to handle screen clearing
 try:
     from IPython.display import clear_output
@@ -218,7 +220,17 @@ def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out
 
 def load_input(input_folder: str) -> List:
     """
-    Load_input
+    This function accepts as parameter an existing path to a folder containing TIFF images and returns a list with the path to every image. It checks for folder existance, TIFF extension of files, and also skips hidden files that might be created by the OS in the folder.
+
+    Parameters
+    ----------
+        input_folder: str
+            Path to input folder containing TIFF images.
+
+    Returns
+    -------
+        List:
+            List of all (TIFF) files present in such folder.
     """
     # Check input folder
     try:
@@ -243,9 +255,19 @@ def load_input(input_folder: str) -> List:
     return myfiles
 
 
-def choose_threshold(df) -> float:
+def choose_threshold(df: pd.DataFrame) -> float:
     """
-    Choose threshold
+    This function helps the user to choose an specific nuclei threshold based on the density plot of nuclei area detected by BiaPy. First, it prints a kdeplot and asks the user to input a nuclei threshold (in um). Then it re-prints the plot showing the input threshold and asks the user for confirmation. If the user wants to change, by entering `n` it repeats the input procedure until positive (`y`) confirmation. Once given, it returns the nuclei threshold (in um) to be used in the `calculate_CTF` module.
+
+    Parameters
+    ----------
+        df: pd.DataFrame
+            DataFrame containing BiaPy nuclei quantification results.
+
+    Returns
+    -------
+        float:
+            Chosen nuclei threshold (in um).
     """
 
     df['area_um'] = df.area * df.PxArea
