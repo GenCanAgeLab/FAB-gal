@@ -7,7 +7,7 @@ from skimage import io
 from skimage.color import label2rgb
 import numpy as np
 import shutil
-from .config import FABGalConfig
+from .config import FABgalConfig
 
 #### Log options ####
 
@@ -16,17 +16,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def run_biapy(cfg: FABGalConfig):
+def run_biapy(cfg: FABgalConfig):
     """
     Run BiaPy analysis to count nuclei with stated parameters, processes output, and generates summary count info for all samples.
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
+        cfg (FABgalConfig): FABgal dataclass variable with all configuration options for running FAB-gal.
     """
     # Results dir for BiaPy
     results_dir = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.run_name
     
-    biapy_result_dir = results_dir / "BiaPy_output"
     biapy_log = results_dir / f"biapy_runInfo.log"
 
     ########### Create and run the BiaPy job ###########
@@ -35,8 +34,8 @@ def run_biapy(cfg: FABGalConfig):
     with biapy_log.open("w") as f, redirect_stdout(f), redirect_stderr(f):
 
         biapy = BiaPy(cfg.config_file,
-                    result_dir = biapy_result_dir,
-                    name = cfg.experiment_name,
+                    result_dir = results_dir,
+                    name = "1",
                     run_id = 1,
                     gpu = cfg.gpu)
     
@@ -45,8 +44,12 @@ def run_biapy(cfg: FABGalConfig):
     
     ########### Process BiaPy output ###########
     
+    ## Create BiaPy final output folder
+
+    Path(results_dir / "BiaPy_output").mkdir(exist_ok=True)
+
     ## Define BiaPy output images folder
-    biapyout = biapy_result_dir / cfg.experiment_name / "results" / f"{cfg.experiment_name}_1" / "per_image_instances"
+    biapyout = results_dir / "1" / "results" / "1_1" / "per_image_instances"
 
     ## Define Nuclei stats output file
     biapystatsfile = results_dir / "BiaPy_results.tsv"
@@ -80,12 +83,15 @@ def run_biapy(cfg: FABGalConfig):
             img = io.imread(inf)
             img = label2rgb(img)*255
             img = img.astype(np.uint8)
-            io.imsave(biapy_result_dir / f"{inf.stem}_mask.png",img, check_contrast = False)
+            io.imsave(results_dir / "BiaPy_output" / f"{inf.stem}_mask.png",img, check_contrast = False)
             inf.unlink()
     
     #### Save subtracted images from BiaPy input (if generated) ####
 
     sub_images_out = results_dir / f"subtracted_images"
+
+    if sub_images_out.exists():
+        shutil.rmtree(sub_images_out)
 
     if cfg.apply_subtract_background:
         Path("biapy_input").replace(sub_images_out)
@@ -96,11 +102,11 @@ def run_biapy(cfg: FABGalConfig):
         
     #### Move BiaPy config yml to results ####
 
-    biapy_config = Path(biapy_result_dir / cfg.experiment_name / "config_files")
+    biapy_config = Path(results_dir / "1" / "config_files")
 
     for file in biapy_config.iterdir():
-        file.replace(biapy_result_dir / "BiaPy_config.yaml")
+        file.replace(results_dir / "BiaPy_output" / "BiaPy_config.yaml")
 
     ### Delete extra files not used in the analysis ###
 
-    shutil.rmtree(biapy_result_dir / cfg.experiment_name)
+    shutil.rmtree(results_dir / "1")

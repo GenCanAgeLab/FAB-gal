@@ -9,7 +9,7 @@ import yaml
 from .run_Bgal import run_Bgal
 from .run_biapy import run_biapy
 from .calculate_CTF import calculate_CTF
-from .config import FABGalConfig
+from .config import FABgalConfig
 from .helpers import load_input,generate_biapy_input
 
 #### Log options ####
@@ -34,12 +34,12 @@ logger = logging.getLogger(__name__)
 
 #####################
 
-def run_fabgal(cfg: FABGalConfig):
+def run_fabgal(cfg: FABgalConfig):
     """
     Main function to run Fab-Gal software
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
+        cfg (FABgalConfig): FABgal dataclass variable with all configuration options for running FAB-gal.
 
     """
     ####### Check config #######
@@ -153,7 +153,7 @@ def run_fabgal(cfg: FABGalConfig):
     ####### Save config file #######
 
     cfg_dict = asdict(cfg)
-    config_path = results_dir / "FABGal_config.yaml"
+    config_path = results_dir / "FABgal_config.yaml"
 
     with config_path.open("w") as f:
         yaml.safe_dump(

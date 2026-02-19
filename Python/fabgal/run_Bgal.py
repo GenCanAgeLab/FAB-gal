@@ -6,7 +6,7 @@ from bioio.writers import OmeTiffWriter
 
 
 from .helpers import calculate_bgal,generate_biapy_input,load_input
-from .config import FABGalConfig
+from .config import FABgalConfig
 
 
 #### Log options ####
@@ -16,12 +16,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def run_Bgal(cfg: FABGalConfig):
+def run_Bgal(cfg: FABgalConfig):
     """
     Run B-gal quantification analysis with stated parameters, returning a results file for all images.
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
+        cfg (FABgalConfig): FABgal dataclass variable with all configuration options for running FAB-gal.
     """
     ####### Load images #######
 
@@ -93,9 +93,9 @@ def run_Bgal(cfg: FABGalConfig):
 
 
     ####### Output B-Gal calculations to file #######
-    BGalres = results_dir / "Raw_BGal_results.tsv"
+    Bgalres = results_dir / "Raw_Bgal_results.tsv"
 
-    with BGalres.open('w') as bgal_f:
+    with Bgalres.open('w') as bgal_f:
 
         # Create file header
         bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tPxArea\tPxAreaUnits\tBgal_RawIntDen\tMean_Intens\n")

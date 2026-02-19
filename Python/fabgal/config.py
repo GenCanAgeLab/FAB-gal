@@ -3,7 +3,7 @@ from dataclasses import dataclass
 ###### Create pipeline config class ######
 
 @dataclass
-class FABGalConfig:
+class FABgalConfig:
     """
     Dataclass for storing all parameters required for running FAB-gal
     
