@@ -44,7 +44,7 @@ def run_Bgal(cfg: FABGalConfig):
         try:
             img = BioImage(inf)
         except UnsupportedFileFormatError as e:
-            raise UnsupportedFileFormatError("\nERROR: Image is not in TIFF format, convert it to TIFF using appropiate software (e.g. ImageJ)") from e
+            raise UnsupportedFileFormatError("\nERROR: Image is not in TIFF format, convert it to TIFF using appropriate software (e.g. ImageJ)") from e
         except Exception as e:
             raise Exception(f"\nERROR: Could not open {inf.name}: {e}") from e
             

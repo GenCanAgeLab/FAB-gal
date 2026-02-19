@@ -42,7 +42,7 @@ def calculate_bgal(img, bgal_ch: int, bgal_thmin: int, bgal_thmax: int = 254, px
             Defaults to 254 to exclude burned (saturated) pixels at 255 
             where real values are unknown.
         pxarea (float): Pixel area of the image. Defaults to None, where the info will be extracted from the image or, if no info is found, defaults to 1.
-        pxunit (str): Units of pixel lenght/width.
+        pxunit (str): Units of pixel length/width.
 
 
     Returns:
@@ -220,7 +220,7 @@ def generate_biapy_input(img, nuclei_ch: int, apply_sbg: bool, sbg_rad: int, out
 
 def load_input(input_folder: str) -> List:
     """
-    This function accepts as parameter an existing path to a folder containing TIFF images and returns a list with the path to every image. It checks for folder existance, TIFF extension of files, and also skips hidden files that might be created by the OS in the folder.
+    This function accepts as parameter an existing path to a folder containing TIFF images and returns a list with the path to every image. It checks for folder existence, TIFF extension of files, and also skips hidden files that might be created by the OS in the folder.
 
     Parameters
     ----------
