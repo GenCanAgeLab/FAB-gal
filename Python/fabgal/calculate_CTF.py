@@ -105,7 +105,7 @@ def calculate_CTF(cfg: FABgalConfig):
         CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
         CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
 
-        CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t")
+        CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t", encoding="utf-8")
 
         # Load individual info (if present)
         if cfg.img_to_ind is not None:
@@ -130,4 +130,4 @@ def calculate_CTF(cfg: FABgalConfig):
             CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
             CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
 
-            CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t")
+            CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t", encoding="utf-8")

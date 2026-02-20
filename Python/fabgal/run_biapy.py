@@ -31,7 +31,7 @@ def run_biapy(cfg: FABgalConfig):
     ########### Create and run the BiaPy job ###########
 
     # Catch stdout and stderr from BiaPy and redirect it
-    with biapy_log.open("w") as f, redirect_stdout(f), redirect_stderr(f):
+    with biapy_log.open("w", encoding="utf-8") as f, redirect_stdout(f), redirect_stderr(f):
 
         biapy = BiaPy(cfg.config_file,
                     result_dir = results_dir,
@@ -68,7 +68,7 @@ def run_biapy(cfg: FABgalConfig):
     # Concatenate dfs
     result = pd.concat(dfs, ignore_index=True)
     result = result.drop(columns=["conditions"])
-    result.to_csv(str(biapystatsfile), sep="\t")
+    result.to_csv(str(biapystatsfile), sep="\t", encoding="utf-8")
 
     # Delete original csv
     for inf in biapy_csv:

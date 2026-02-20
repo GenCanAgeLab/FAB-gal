@@ -95,7 +95,7 @@ def run_Bgal(cfg: FABgalConfig):
     ####### Output B-Gal calculations to file #######
     Bgalres = results_dir / "Raw_Bgal_results.tsv"
 
-    with Bgalres.open('w') as bgal_f:
+    with Bgalres.open('w', encoding="utf-8") as bgal_f:
 
         # Create file header
         bgal_f.write("File\tNpxPos\tNpxTot\tAreaPos\tAreaTot\tPxArea\tPxAreaUnits\tBgal_RawIntDen\tMean_Intens\n")

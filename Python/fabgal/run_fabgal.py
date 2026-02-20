@@ -155,7 +155,7 @@ def run_fabgal(cfg: FABgalConfig):
     cfg_dict = asdict(cfg)
     config_path = results_dir / "FABgal_config.yaml"
 
-    with config_path.open("w") as f:
+    with config_path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(
             asdict(cfg),
             f,
