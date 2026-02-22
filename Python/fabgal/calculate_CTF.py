@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from re import sub
 import logging
-from .config import FABGalConfig
+from .config import FABgalConfig
 from .helpers import choose_threshold
 
 
@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 
-def calculate_CTF(cfg: FABGalConfig):
+def calculate_CTF(cfg: FABgalConfig):
     """
     Process B-Gal calculations and BiaPy nuclei count to get the corrected total fluorescence (CTF) from each individual image. If an `image to individual`file is entered, also returns CTF calculations per individual, after adding the measurements of all image replicates from each individual.
 
     Args:
-        cfg (FABGalConfig): FABGal dataclass variable with all configuration options for running FAB-gal.
+        cfg (FABgalConfig): FABgal dataclass variable with all configuration options for running FAB-gal.
     """
 
-    ########## Load BGal and nuclei stats ##########
+    ########## Load Bgal and nuclei stats ##########
 
     ### Define result dir ###
 
@@ -85,10 +85,10 @@ def calculate_CTF(cfg: FABGalConfig):
     # B-Gal background intensity
     computeCTF = True
     if cfg.backgr_val is not None:
-        BGal_backgr = cfg.backgr_val
+        Bgal_backgr = cfg.backgr_val
     elif cfg.backgr_img is not None:
         backgr_img = sub(r'(?i)\.tiff?$', '', cfg.backgr_img)
-        BGal_backgr = bgaldf.loc[bgaldf['File'] == backgr_img, 'Mean_Intens'].values[0]       
+        Bgal_backgr = bgaldf.loc[bgaldf['File'] == backgr_img, 'Mean_Intens'].values[0]       
     else:
         computeCTF = False
         print("No B-gal background information supplied. Will not compute CTF.")
@@ -100,12 +100,12 @@ def calculate_CTF(cfg: FABGalConfig):
     # Calculate CTF on individual images (only if background intensity is present)
     if computeCTF:
         CTFimg = resdf
-        CTFimg['bgMF'] = BGal_backgr
+        CTFimg['bgMF'] = Bgal_backgr
         CTFimg['CTFnucl'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NumNucl
         CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
         CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
 
-        CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t")
+        CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t", encoding="utf-8")
 
         # Load individual info (if present)
         if cfg.img_to_ind is not None:
@@ -125,9 +125,9 @@ def calculate_CTF(cfg: FABGalConfig):
                 NumImages=("File", "count")
             )
      
-            CTFind['bgMF'] = BGal_backgr
+            CTFind['bgMF'] = Bgal_backgr
             CTFind['CTFnucl'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NumNucl
             CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
             CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
 
-            CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t")
+            CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t", encoding="utf-8")
