@@ -22,7 +22,6 @@ def calculate_CTF(cfg: FABgalConfig):
     Args:
         cfg (FABgalConfig): FABgal dataclass variable with all configuration options for running FAB-gal.
     """
-
     ########## Load Bgal and nuclei stats ##########
 
     ### Define result dir ###
@@ -56,78 +55,134 @@ def calculate_CTF(cfg: FABgalConfig):
         else:
             raise FileNotFoundError("\nERROR: Cannot find newly generated B-gal output file. Please check that B-gal quantification ended correctly.")
 
-    if not biapystatsfile.exists():
+    # If nuclei_ch is None (tissues), we do not have a BiaPy result file
+    if not biapystatsfile.exists() and cfg.nuclei_ch is not None:
         if cfg.is_rerun and cfg.Biapy_run is not None:
             raise FileNotFoundError(f"\nERROR: Run {cfg.Biapy_run} cannot be found or BiaPy output file is not located in it. Please review run {cfg.Biapy_run} results and check FABgal config.")
         else:
             raise FileNotFoundError("\nERROR: Cannot find newly generated BiaPy output file. Please check that BiaPy ended correctly.")
+        
+    ########## Calculate CTF/area only (when no nuclei info is present) ##########
 
-    ### Load B-gal and BiaPy results ###
+    if cfg.nuclei_ch is None:
+        
+        ## Load B-gal results ##
+        bgaldf = pd.read_table(bgalquantfile)
 
-    nucleidf = pd.read_table(biapystatsfile)
-    bgaldf = pd.read_table(bgalquantfile)
+        ## B-Gal background intensity ##
+        computeCTF = True
+        if cfg.backgr_val is not None:
+            Bgal_backgr = cfg.backgr_val
+        elif cfg.backgr_img is not None:
+            backgr_img = sub(r'(?i)\.tiff?$', '', cfg.backgr_img)
+            Bgal_backgr = bgaldf.loc[bgaldf['File'] == backgr_img, 'Mean_Intens'].values[0]       
+        else:
+            computeCTF = False
+            print("No B-gal background information supplied. Will not compute CTF.")
 
-    # Filter nuclei below area threshold
-    nucleidf_pxarea = pd.merge(nucleidf,bgaldf[['File','PxArea']],how='inner',on='File')
+        # Calculate CTF on individual images (only if background intensity is present)
+        if computeCTF:
+            CTFimg = bgaldf
+            CTFimg['bgMF'] = Bgal_backgr
+            CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
+            CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
 
-    ## If cfg.nuclei_thr is None, then choose interactively the nuclei thr
-    if cfg.nuclei_thr is None:
-        cfg.nuclei_thr = choose_threshold(nucleidf_pxarea)
-        nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
-        nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+            CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t", encoding="utf-8")
+
+            # Load individual info (if present)
+            if cfg.img_to_ind is not None:
+                img_ind_df = pd.read_table(cfg.img_to_ind)
+                img_ind_df["File"] = img_ind_df["File"].str.replace(r"(?i)\.tiff?$","",regex=True)
+                bgaldf = pd.merge(bgaldf,img_ind_df,how='outer',on='File')
+
+                CTFind = bgaldf.groupby(['Individual']).agg(
+                    NpxPos = ("NpxPos","sum"),
+                    NpxTot = ("NpxTot","sum"),
+                    AreaPos = ("AreaPos","sum"),
+                    AreaTot = ("AreaTot","sum"),
+                    PxArea = ("PxArea","first"), # All images from the same ind. must have the same PixArea
+                    Bgal_RawIntDen = ("Bgal_RawIntDen","sum"),
+                    Mean_Intens = ("Mean_Intens","mean"),
+                    NumImages=("File", "count")
+                )
+        
+                CTFind['bgMF'] = Bgal_backgr
+                CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
+                CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
+
+                CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t", encoding="utf-8")
+
+    #########################################
     else:
-        nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
-        nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
 
-    # Count nuclei per image file 
-    nucleitot = nucleidf_filt['File'].value_counts()
+        ########## Calculate all CTF measurements (when nuclei info is present) ##########
 
-    # B-Gal background intensity
-    computeCTF = True
-    if cfg.backgr_val is not None:
-        Bgal_backgr = cfg.backgr_val
-    elif cfg.backgr_img is not None:
-        backgr_img = sub(r'(?i)\.tiff?$', '', cfg.backgr_img)
-        Bgal_backgr = bgaldf.loc[bgaldf['File'] == backgr_img, 'Mean_Intens'].values[0]       
-    else:
-        computeCTF = False
-        print("No B-gal background information supplied. Will not compute CTF.")
+        ### Load B-gal and BiaPy results ###
 
-    # Merge nuclei and B-Gal data
-    resdf = pd.merge(bgaldf,nucleitot,how='outer',on='File')
-    resdf = resdf.rename(columns = {'count':'NumNucl'})
+        nucleidf = pd.read_table(biapystatsfile)
+        bgaldf = pd.read_table(bgalquantfile)
 
-    # Calculate CTF on individual images (only if background intensity is present)
-    if computeCTF:
-        CTFimg = resdf
-        CTFimg['bgMF'] = Bgal_backgr
-        CTFimg['CTFnucl'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NumNucl
-        CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
-        CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
+        # Filter nuclei below area threshold
+        nucleidf_pxarea = pd.merge(nucleidf,bgaldf[['File','PxArea']],how='inner',on='File')
 
-        CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t", encoding="utf-8")
+        ## If cfg.nuclei_thr is None, then choose interactively the nuclei thr
+        if cfg.nuclei_thr is None:
+            cfg.nuclei_thr = choose_threshold(nucleidf_pxarea)
+            nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
+            nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+        else:
+            nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
+            nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
 
-        # Load individual info (if present)
-        if cfg.img_to_ind is not None:
-            img_ind_df = pd.read_table(cfg.img_to_ind)
-            img_ind_df["File"] = img_ind_df["File"].str.replace(r"(?i)\.tiff?$","",regex=True)
-            resdf = pd.merge(resdf,img_ind_df,how='outer',on='File')
+        # Count nuclei per image file 
+        nucleitot = nucleidf_filt['File'].value_counts()
 
-            CTFind = resdf.groupby(['Individual']).agg(
-                NpxPos = ("NpxPos","sum"),
-                NpxTot = ("NpxTot","sum"),
-                AreaPos = ("AreaPos","sum"),
-                AreaTot = ("AreaTot","sum"),
-                PxArea = ("PxArea","first"), # All images from the same ind. must have the same PixArea
-                Bgal_RawIntDen = ("Bgal_RawIntDen","sum"),
-                Mean_Intens = ("Mean_Intens","mean"),
-                NumNucl = ("NumNucl","sum"),
-                NumImages=("File", "count")
-            )
-     
-            CTFind['bgMF'] = Bgal_backgr
-            CTFind['CTFnucl'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NumNucl
-            CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
-            CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
+        # B-Gal background intensity
+        computeCTF = True
+        if cfg.backgr_val is not None:
+            Bgal_backgr = cfg.backgr_val
+        elif cfg.backgr_img is not None:
+            backgr_img = sub(r'(?i)\.tiff?$', '', cfg.backgr_img)
+            Bgal_backgr = bgaldf.loc[bgaldf['File'] == backgr_img, 'Mean_Intens'].values[0]       
+        else:
+            computeCTF = False
+            print("No B-gal background information supplied. Will not compute CTF.")
 
-            CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t", encoding="utf-8")
+        # Merge nuclei and B-Gal data
+        resdf = pd.merge(bgaldf,nucleitot,how='outer',on='File')
+        resdf = resdf.rename(columns = {'count':'NumNucl'})
+
+        # Calculate CTF on individual images (only if background intensity is present)
+        if computeCTF:
+            CTFimg = resdf
+            CTFimg['bgMF'] = Bgal_backgr
+            CTFimg['CTFnucl'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NumNucl
+            CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
+            CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
+
+            CTFimg.to_csv(results_dir / f"CTF_perimage.tsv", sep="\t", encoding="utf-8")
+
+            # Load individual info (if present)
+            if cfg.img_to_ind is not None:
+                img_ind_df = pd.read_table(cfg.img_to_ind)
+                img_ind_df["File"] = img_ind_df["File"].str.replace(r"(?i)\.tiff?$","",regex=True)
+                resdf = pd.merge(resdf,img_ind_df,how='outer',on='File')
+
+                CTFind = resdf.groupby(['Individual']).agg(
+                    NpxPos = ("NpxPos","sum"),
+                    NpxTot = ("NpxTot","sum"),
+                    AreaPos = ("AreaPos","sum"),
+                    AreaTot = ("AreaTot","sum"),
+                    PxArea = ("PxArea","first"), # All images from the same ind. must have the same PixArea
+                    Bgal_RawIntDen = ("Bgal_RawIntDen","sum"),
+                    Mean_Intens = ("Mean_Intens","mean"),
+                    NumNucl = ("NumNucl","sum"),
+                    NumImages=("File", "count")
+                )
+        
+                CTFind['bgMF'] = Bgal_backgr
+                CTFind['CTFnucl'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NumNucl
+                CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
+                CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
+
+                CTFind.to_csv(results_dir / "CTF_perindividual.tsv", sep="\t", encoding="utf-8")

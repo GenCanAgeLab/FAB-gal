@@ -140,15 +140,13 @@ def run_fabgal(cfg: FABgalConfig):
     
     ####### Calculate CTF #######
 
-    if cfg.nuclei_ch is not None:
+    # Start message
+    logger.info("Starting data processing and CTF calculation...")
 
-        # Start message
-        logger.info("Starting data processing and CTF calculation...")
+    calculate_CTF(cfg)
 
-        calculate_CTF(cfg)
-
-        # End message
-        logger.info("Finished data processing")
+    # End message
+    logger.info("Finished data processing")
     
     ####### Save config file #######
 

@@ -50,7 +50,9 @@ def run_Bgal(cfg: FABgalConfig):
             
         ####### Generate input for BiaPy if needed #######
         if cfg.is_rerun and cfg.Biapy_run is not None :
-            pass # Skip BiaPy input generation
+            pass # Skip BiaPy input generation (prior BiaPy run)
+        elif cfg.nuclei_ch is None:
+            pass # Skip BiaPy input generation (no nuclei ch info)
         else:
             # Create BiaPy input directory or check if it exists
             biapy_input = Path("biapy_input")
