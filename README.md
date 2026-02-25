@@ -12,7 +12,7 @@ FAB-gal is a method that joins the simplicity, fast execution, low cost and vers
 
 ## FAB-gal desktop application for Windows, macOS and Linux
 
-We have developed a desktop application that enables a user-friendly usage of our analysis method. For more details, see the full documentiation in the [Wiki](https://github.com/antotartier/FAB-gal/wiki/Desktop-application)
+We have developed a desktop application that enables a user-friendly usage of our analysis method. For more details, see the full documentiation in the [Wiki](https://github.com/GenCanAgeLab/FAB-gal/wiki/Desktop-application)
 
 Windows app
 
@@ -22,7 +22,7 @@ Linux app
 
 ## FAB-gal computational pipeline
 
-We have designed a ready-to-use computational workflow that enables a more customable use of FAB-gal and its use in high-throughput experiments. For more details, see the full documentiation in the [Wiki](https://github.com/antotartier/FAB-gal/wiki/Computational-pipeline)
+We have designed a ready-to-use computational workflow that enables a more customable use of FAB-gal and its use in high-throughput experiments. For more details, see the full documentiation in the [Wiki](https://github.com/GenCanAgeLab/FAB-gal/wiki/Computational-pipeline)
 
 
 ## Authors
