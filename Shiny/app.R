@@ -308,10 +308,10 @@ ui <- fluidPage(
   fluidRow(
     style = "text-align: center;",
     p(
-      "Developed by Antonio Garcia-Bernardo Tartiere, Alejandro P. Ugalde and David Roiz del Valle"
+      "Developed by Antonio Garcia-Bernardo Tartiere, David Roiz del Valle, and Alejandro P. Ugalde"
     ),
     a(
-      "github.com/GenCanAgeLab/SAbGal_quant",
+      "github.com/GenCanAgeLab/FAB-gal",
       href = "https://github.com/GenCanAgeLab/FAB-gal",
       target = "_blank"
     )
