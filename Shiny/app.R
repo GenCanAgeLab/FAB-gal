@@ -37,7 +37,7 @@ ui <- fluidPage(
             align = "rigth",
             height = 80
           ),
-          href = "https://github.com/antotartier/FAB-gal",
+          href = "https://github.com/GenCanAgeLab/FAB-gal",
           target = "_blank"
         )
       ),
@@ -222,7 +222,7 @@ ui <- fluidPage(
         actionButton('run.all', "Run for all images", class = "btn-primary"),
         a(
           "Click Here To Learn More",
-          href = "https://github.com/antotartier/FAB-gal/wiki",
+          href = "https://github.com/GenCanAgeLab/FAB-gal/wiki",
           target = "_blank",
           class = "btn btn-info",
           icon = icon("info-circle")
@@ -312,7 +312,7 @@ ui <- fluidPage(
     ),
     a(
       "github.com/GenCanAgeLab/SAbGal_quant",
-      href = "https://github.com/antotartier/FAB-gal",
+      href = "https://github.com/GenCanAgeLab/FAB-gal",
       target = "_blank"
     )
   ),
