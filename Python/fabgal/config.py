@@ -10,9 +10,11 @@ class FABgalConfig:
     ## Variables:
 
     ### Run parameters:
-        **apply_subtract_background** (`bool`): If `True`, subtract background algorythm will be applied to input images before BiaPy runs.
+        **experiment_name** (`str`): Name of the experiment.
 
         **run_name** (`str`): Name of run.
+
+        **apply_subtract_background** (`bool`): If `True`, subtract background algorythm will be applied to input images before BiaPy runs.
 
     ### Run parameters:
         **is_rerun** (`bool`): Set as `True` if the current run is a re-run of prior(s) run(s). If `True`, then the user needs to indicate which info (B-gal, BiaPy, or both) the program is reusing in `Bgal_run` and `Biapy_run`, respectively.
@@ -23,8 +25,6 @@ class FABgalConfig:
 
     ### File parameters:
         **input_folder** (`str`): Path to folder containing input images in `TIFF` format.
-
-        **experiment_name** (`str`): Name of the experiment.
 
         **img_to_ind** (`str`): Path to `.tsv` file with two columns: `File` and `Individual`, each containing filenames (eg. `image1.tif`) and the corresponding individual (eg. `WT 1`). If `img_to_ind` is not `None`, then FAB-gal will compute CTF per individual as well as per image, and return them in a separate file.
 
