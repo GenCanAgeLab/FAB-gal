@@ -12,11 +12,11 @@ FAβ-gal is a method that joins the simplicity, fast execution, low cost and ver
 
 ## FAβ-gal R Shinny application
 
-We have developed a Shiny application that enables a user-friendly usage of our analysis method. For more details, see the full documentation in the [Wiki](https://github.com/GenCanAgeLab/FAβ-gal/wiki/Desktop-application)
+We have developed a Shiny application that enables a user-friendly usage of our analysis method. For more details, see the full documentation in the [Wiki](https://github.com/GenCanAgeLab/FAB-gal/wiki/Shiny-application)
 
 ## FAβ-gal computational pipeline
 
-We have designed a ready-to-use Python computational workflow that enables a more customable use of FAβ-gal and its use in high-throughput experiments. For more details, see the full documentation in the [Wiki](https://github.com/GenCanAgeLab/FAβ-gal/wiki/Computational-pipeline)
+We have designed a ready-to-use Python computational workflow that enables a more customable use of FAβ-gal and its use in high-throughput experiments. For more details, see the full documentation in the [Wiki](https://github.com/GenCanAgeLab/FAB-gal/wiki/Computational-pipeline)
 
 
 ## Authors
