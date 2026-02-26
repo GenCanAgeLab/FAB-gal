@@ -41,6 +41,9 @@ ENV HOME=/home/
 RUN  R -e 'source("renv/activate.R")'
 RUN --mount=type=cache,id=renv-cache,target=/root/.cache/R/renv R -e 'renv::restore()'
 
+# Pre-download the Bio-Formats Java archive so it is baked into the image
+RUN R -e 'library(RBioFormats)'
+
 # Copy Shiny app
 COPY Shiny/ij /srv/shiny-server/ij
 COPY Shiny/www /srv/shiny-server/www
