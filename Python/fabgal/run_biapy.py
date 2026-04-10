@@ -3,11 +3,9 @@ from pathlib import Path
 import logging
 from biapy import BiaPy
 import pandas as pd
-from skimage import io
-from skimage.color import label2rgb
-import numpy as np
 import shutil
 from .config import FABgalConfig
+from .helpers import choose_threshold
 
 #### Log options ####
 
@@ -54,7 +52,7 @@ def run_biapy(cfg: FABgalConfig):
     ## Define Nuclei stats output file
     biapystatsfile = results_dir / "BiaPy_results.tsv"
 
-    #### Process nuclei stats ####
+    ######## Process nuclei stats ########
 
     # List of csv with filename column
     biapy_csv = list(biapyout.glob("*full_stats.csv"))
@@ -68,23 +66,23 @@ def run_biapy(cfg: FABgalConfig):
     # Concatenate dfs
     result = pd.concat(dfs, ignore_index=True)
     result = result.drop(columns=["conditions"])
+
+    # Save concat data
     result.to_csv(str(biapystatsfile), sep="\t", encoding="utf-8")
 
     # Delete original csv
     for inf in biapy_csv:
         inf.unlink()
 
-    ########### Arrange intermediate files and images ###########
+    ########## Arrange intermediate files and images ###########
     
-    #### Process output mask images ####
+    ### Process output mask images ####
+    masks_out = results_dir / "BiaPy_output" / "original_masks"
+    masks_out.mkdir(exist_ok=True)
 
     if cfg.keep_masks:
-        for inf in biapyout.glob("*.tif"):
-            img = io.imread(inf)
-            img = label2rgb(img)*255
-            img = img.astype(np.uint8)
-            io.imsave(results_dir / "BiaPy_output" / f"{inf.stem}_mask.png",img, check_contrast = False)
-            inf.unlink()
+        for file in biapyout.glob("*.tif"):
+            file.replace(masks_out / file.name)
     
     #### Save subtracted images from BiaPy input (if generated) ####
 
