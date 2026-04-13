@@ -16,6 +16,7 @@ RUN apt-get update -y && apt-get install -y \
     libpng-dev \
     default-jdk \
     libtiff-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # rJava configuration
