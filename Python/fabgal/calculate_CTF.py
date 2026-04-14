@@ -190,6 +190,7 @@ def calculate_CTF(cfg: FABgalConfig):
         if computeCTF:
             CTFimg = resdf
             CTFimg['bgMF'] = Bgal_backgr
+            CTFimg['CTF'] = CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF
             CTFimg['CTFnucl'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NumNucl
             CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
             CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
@@ -215,6 +216,7 @@ def calculate_CTF(cfg: FABgalConfig):
                 )
         
                 CTFind['bgMF'] = Bgal_backgr
+                CTFind['CTF'] = CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF
                 CTFind['CTFnucl'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NumNucl
                 CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
                 CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
