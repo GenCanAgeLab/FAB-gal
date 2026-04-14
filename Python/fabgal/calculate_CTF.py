@@ -158,21 +158,18 @@ def calculate_CTF(cfg: FABgalConfig):
             for inf in original_masks.glob("*.tif"):
                 img = io.imread(inf)
                 #### Filter by area ####
-                for label in np.unique(img):
-                    if label == 0:
-                        continue
-                    area = np.sum(img == label)
-                    if area < cfg.nuclei_thr / nucleidf_pxarea['PxArea'].median():
-                        img[img == label] = 0
+                label, area = np.unique(img, return_counts = True)
+                labs_to_remove = label[area < cfg.nuclei_thr / nucleidf_pxarea['PxArea'].median()]
+                img[np.isin(img,labs_to_remove)] = 0
 
-            ## Save mask as RGB ##
+                ## Save mask as RGB ##
                 img = label2rgb(img)*255
                 img = img.astype(np.uint8)
                 io.imsave(filtered_masks / f"{inf.stem}_mask.png",img, check_contrast = False)
 
 
-    # Count nuclei per image file 
-    nucleitot = nucleidf_filt['File'].value_counts()
+        # Count nuclei per image file 
+        nucleitot = nucleidf_filt['File'].value_counts()
 
         # B-Gal background intensity
         computeCTF = True
