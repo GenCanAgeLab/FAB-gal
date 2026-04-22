@@ -5,9 +5,9 @@
 
 # FAβ-gal: Fluorescence Analysis of β-galactosidase activity
 
-🔥 **NEWS** 🔥: FAβ-gal preprint is now available at https://www.biorxiv.org/content/10.64898/2026.02.27.707795v1
+🔥 **NEWS** 🔥: FAβ-gal preprint is now available at https://www.biorxiv.org/content/10.64898/2026.02.27.707795v2
 
-FAβ-gal is a method that joins the simplicity, fast execution, low cost and versatility of the classical SA-β-gal assay with the quantification and sensitivity of fluorescence assays. It exploits the far-red fluorescence of X-gal product ([Levitsky et al., 2013](https://www.nature.com/articles/srep02937)) coupled with a count of cell nuclei powered by [BiaPy](https://github.com/BiaPyX/BiaPy) to quantify in a semiautomatic and unbiased manner SA-β-gal activity. This github repository is dedicated to the image analysis part od the method. To read the full method go to [FAβ-gal publication](https://www.biorxiv.org/content/10.64898/2026.02.27.707795v1)
+FAβ-gal is a method that joins the simplicity, fast execution, low cost and versatility of the classical SA-β-gal assay with the quantification and sensitivity of fluorescence assays. It exploits the far-red fluorescence of X-gal product ([Levitsky et al., 2013](https://www.nature.com/articles/srep02937)) coupled with a count of cell nuclei powered by [BiaPy](https://github.com/BiaPyX/BiaPy) to quantify in a semiautomatic and unbiased manner SA-β-gal activity. This github repository is dedicated to the image analysis part od the method. To read the full method go to [FAβ-gal publication](https://www.biorxiv.org/content/10.64898/2026.02.27.707795v2)
 
 
 ## FAβ-gal R Shinny application
@@ -30,7 +30,7 @@ We have designed a ready-to-use Python computational workflow that enables a mor
 
 ## Citation
 
-Please note that FAβ-gal is based on a publication. If you use it successfully for your research please be so kind to cite our work: ["FAβ-gal: an automated fluorescence-based quantification of the senescence-associated beta-galactosidase X-gal assay"](https://www.biorxiv.org/content/10.64898/2026.02.27.707795v1)
+Please note that FAβ-gal is based on a publication. If you use it successfully for your research please be so kind to cite our work: ["FAβ-gal: an automated fluorescence-based quantification of the senescence-associated beta-galactosidase X-gal assay"](https://www.biorxiv.org/content/10.64898/2026.02.27.707795v2)
 
 
 
