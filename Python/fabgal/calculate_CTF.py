@@ -1,6 +1,9 @@
 from pathlib import Path
 import pandas as pd
 from re import sub
+from skimage import io
+from skimage.color import label2rgb
+import numpy as np
 import logging
 from .config import FABgalConfig
 from .helpers import choose_threshold
@@ -39,12 +42,15 @@ def calculate_CTF(cfg: FABgalConfig):
         
         # BiaPy results (prior or newly generated)
         if cfg.Biapy_run is not None:
+            biapyout = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.Biapy_run / "BiaPy_output"
             biapystatsfile = Path(cfg.out_path) / f"Results_{cfg.experiment_name}" / cfg.Biapy_run / "BiaPy_results.tsv"
         else:
+            biapyout = results_dir / "BiaPy_output"
             biapystatsfile = results_dir / "BiaPy_results.tsv"
     else:
         # Newly generated results for both if is_rerun is false
         bgalquantfile = results_dir / "Raw_Bgal_results.tsv"
+        biapyout = results_dir / "BiaPy_output"
         biapystatsfile = results_dir / "BiaPy_results.tsv"
 
     ### Check if B-gal and BiaPy results file exist ###
@@ -122,7 +128,7 @@ def calculate_CTF(cfg: FABgalConfig):
         nucleidf = pd.read_table(biapystatsfile)
         bgaldf = pd.read_table(bgalquantfile)
 
-        # Filter nuclei below area threshold
+        ##### Filter nuclei below area threshold #####
         nucleidf_pxarea = pd.merge(nucleidf,bgaldf[['File','PxArea']],how='inner',on='File')
 
         ## If cfg.nuclei_thr is None, then choose interactively the nuclei thr
@@ -133,6 +139,34 @@ def calculate_CTF(cfg: FABgalConfig):
         else:
             nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
             nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+        ## If cfg.nuclei_thr is None, then choose interactively the nuclei thr
+        if cfg.nuclei_thr is None:
+            cfg.nuclei_thr = choose_threshold(nucleidf_pxarea)
+            nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
+            nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+        else:
+            nucleidf_pxarea['nucl_thr_pixel'] = cfg.nuclei_thr / nucleidf_pxarea.PxArea
+            nucleidf_filt = nucleidf_pxarea[nucleidf_pxarea.area > nucleidf_pxarea.nucl_thr_pixel]
+
+        ## Filter BiaPy mask results ##
+        original_masks = biapyout / "original_masks"
+
+        filtered_masks = results_dir / "filtered_masks"
+        filtered_masks.mkdir(exist_ok=True)
+
+        if cfg.keep_masks:
+            for inf in original_masks.glob("*.tif"):
+                img = io.imread(inf)
+                #### Filter by area ####
+                label, area = np.unique(img, return_counts = True)
+                labs_to_remove = label[area < cfg.nuclei_thr / nucleidf_pxarea['PxArea'].median()]
+                img[np.isin(img,labs_to_remove)] = 0
+
+                ## Save mask as RGB ##
+                img = label2rgb(img)*255
+                img = img.astype(np.uint8)
+                io.imsave(filtered_masks / f"{inf.stem}_mask.png",img, check_contrast = False)
+
 
         # Count nuclei per image file 
         nucleitot = nucleidf_filt['File'].value_counts()
@@ -156,6 +190,7 @@ def calculate_CTF(cfg: FABgalConfig):
         if computeCTF:
             CTFimg = resdf
             CTFimg['bgMF'] = Bgal_backgr
+            CTFimg['CTF'] = CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF
             CTFimg['CTFnucl'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NumNucl
             CTFimg['CTFpix'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.NpxTot
             CTFimg['CTFarea'] = (CTFimg.Bgal_RawIntDen - CTFimg.NpxPos * CTFimg.bgMF) / CTFimg.AreaTot
@@ -181,6 +216,7 @@ def calculate_CTF(cfg: FABgalConfig):
                 )
         
                 CTFind['bgMF'] = Bgal_backgr
+                CTFind['CTF'] = CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF
                 CTFind['CTFnucl'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NumNucl
                 CTFind['CTFpix'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.NpxTot
                 CTFind['CTFarea'] = (CTFind.Bgal_RawIntDen - CTFind.NpxPos * CTFind.bgMF) / CTFind.AreaTot
